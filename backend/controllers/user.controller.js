@@ -1,21 +1,20 @@
 const User = require("../models/User.model");
 
 exports.getWorkers = async (req, res) => {
-  const { department } = req.query;
+  try {
 
-  const filter = {
-    role: "worker",
-  };
+    const workers = await User.find({
+      role: "worker",
+      department: req.user.department
+    }).select(
+      "name department availabilityStatus lastKnownLocation"
+    );
 
-  if (department) {
-    filter.skills = department;
+    res.json(workers);
+
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
   }
-
-  const workers = await User.find(filter).select(
-    "name skills availabilityStatus lastKnownLocation"
-  );
-
-  res.json(workers);
 };
 
 exports.updateAvailability = async (req, res) => {

@@ -52,14 +52,21 @@ exports.getMyComplaints = async (req, res) => {
 exports.getAllComplaints = async (req, res) => {
   try {
 
-    const complaints = await Complaint.find()
+    /* Admin department */
+    const department = req.user.department;
+
+    /* Fetch only department complaints */
+    const complaints = await Complaint.find({
+      issueType: department
+    })
       .populate("citizenId", "name email")
       .sort({ createdAt: -1 });
 
     res.json(complaints);
 
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 

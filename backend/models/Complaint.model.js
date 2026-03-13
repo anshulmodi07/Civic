@@ -12,7 +12,7 @@ const ComplaintSchema = new mongoose.Schema(
 
     issueType: {
       type: String,
-      enum: ["water", "electricity", "road", "garbage"],
+      enum: ["water", "electricity", "road", "sanitation"],
       
     },
 

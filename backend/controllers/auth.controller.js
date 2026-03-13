@@ -12,12 +12,16 @@ exports.login = async (req, res) => {
 
     let user = await User.findOne({ email, role });
 
-    if (!user) {
+    if (!user && role === "citizen") {
       user = await User.create({
-        name: name || role.toUpperCase(),
+        name: name || "Citizen",
         email,
         role,
       });
+    }
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
     }
 
     const token = jwt.sign(

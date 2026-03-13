@@ -1,14 +1,39 @@
 module.exports = [
-   {
+  {
     name: "Test Citizen",
     email: "citizen@test.com",
     role: "citizen"
   },
+
+  /* Department Admins */
+
   {
-    name: "Admin User",
-    email: "admin@test.com",
+    name: "Water Admin",
+    email: "water.admin@test.com",
     role: "admin",
+    department: "water"
   },
+  {
+    name: "Electricity Admin",
+    email: "electric.admin@test.com",
+    role: "admin",
+    department: "electricity"
+  },
+  {
+    name: "Road Admin",
+    email: "road.admin@test.com",
+    role: "admin",
+    department: "road"
+  },
+  {
+    name: "Sanitation Admin",
+    email: "sanitation.admin@test.com",
+    role: "admin",
+    department: "sanitation"
+  },
+
+  /* Workers */
+
   {
     name: "Water Worker",
     email: "water.worker@test.com",
