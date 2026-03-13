@@ -2,86 +2,151 @@ const Task = require("../models/Task.model");
 const Complaint = require("../models/Complaint.model");
 const AuditLog = require("../models/AuditLog.model");
 
+/* ===============================
+   ADMIN ASSIGNS TASK
+================================ */
+
 exports.assignTask = async (req, res) => {
-  const { complaintId, workerId } = req.body;
+  try {
+    const { complaintId, workerId } = req.body;
 
-  const task = await Task.create({
-    complaintId,
-    workerId,
-    status: "assigned",
-    assignedAt: new Date(),
-  });
+    const task = await Task.create({
+      complaintId,
+      workerId,
+      status: "assigned",
+      assignedAt: new Date(),
+    });
 
-  await Complaint.findByIdAndUpdate(complaintId, {
-    status: "assigned",
-    assignedTaskId: task._id,
-  });
+    await Complaint.findByIdAndUpdate(complaintId, {
+      status: "assigned",
+      assignedTaskId: task._id,
+    });
 
-  await AuditLog.create({
-    actionType: "TASK_ASSIGNED",
-    performedBy: req.user.userId,
-    entityType: "complaint",
-    entityId: complaintId,
-    oldStatus: "new",
-    newStatus: "assigned",
-  });
+    await AuditLog.create({
+      actionType: "TASK_ASSIGNED",
+      performedBy: req.user.userId,
+      entityType: "complaint",
+      entityId: complaintId,
+      oldStatus: "new",
+      newStatus: "assigned",
+    });
 
-  res.status(201).json({
-    taskId: task._id,
-    status: task.status,
-  });
+    res.status(201).json({
+      taskId: task._id,
+      status: task.status,
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
+
+/* ===============================
+   WORKER DASHBOARD
+================================ */
 
 exports.getMyTasks = async (req, res) => {
-  const tasks = await Task.find({ workerId: req.user.userId })
-    .populate("complaintId");
+  try {
+    const tasks = await Task.find({
+      workerId: req.user.userId,
+    }).populate("complaintId");
 
-  res.json(tasks);
+    res.json(tasks);
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
+
+/* ===============================
+   WORKER ACCEPT TASK
+================================ */
+
+exports.acceptTask = async (req, res) => {
+  try {
+
+    const task = await Task.findById(req.params.id);
+
+    task.status = "accepted";
+    task.acceptedAt = new Date();
+
+    await task.save();
+
+    res.json({
+      status: "accepted",
+      message: "Task accepted",
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* ===============================
+   WORKER START TASK
+================================ */
+
+exports.startTask = async (req, res) => {
+  try {
+
+    const task = await Task.findById(req.params.id);
+
+    task.status = "in-progress";
+    task.startedAt = new Date();
+
+    await task.save();
+
+    await Complaint.findByIdAndUpdate(task.complaintId, {
+      status: "in-progress",
+    });
+
+    res.json({
+      status: "in-progress",
+      message: "Work started",
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* ===============================
+   WORKER COMPLETE TASK
+================================ */
 
 exports.completeTask = async (req, res) => {
-  const { proofImages } = req.body;
+  try {
 
-  const task = await Task.findById(req.params.id);
-  task.status = "completed";
-  task.proofImages = proofImages;
-  task.completedAt = new Date();
-  await task.save();
+    const { proofImages, notes } = req.body;
 
-  await AuditLog.create({
-    actionType: "TASK_COMPLETED",
-    performedBy: req.user.userId,
-    entityType: "task",
-    entityId: task._id,
-    oldStatus: "assigned",
-    newStatus: "completed",
-  });
+    const task = await Task.findById(req.params.id);
 
-  res.json({
-    status: "completed",
-    message: "Task completed, pending admin verification",
-  });
-};
+    task.status = "resolved";
+    task.proofImages = proofImages;
+    task.notes = notes;
+    task.completedAt = new Date();
 
-exports.verifyTask = async (req, res) => {
-  const task = await Task.findById(req.params.id);
+    await task.save();
 
-  task.status = "verified";
-  task.verifiedAt = new Date();
-  await task.save();
+    await Complaint.findByIdAndUpdate(task.complaintId, {
+      status: "closed",
+    });
 
-  await Complaint.findByIdAndUpdate(task.complaintId, {
-    status: "closed",
-  });
+    await AuditLog.create({
+      actionType: "TASK_RESOLVED",
+      performedBy: req.user.userId,
+      entityType: "task",
+      entityId: task._id,
+      oldStatus: "in-progress",
+      newStatus: "resolved",
+    });
 
-  await AuditLog.create({
-    actionType: "TASK_VERIFIED",
-    performedBy: req.user.userId,
-    entityType: "task",
-    entityId: task._id,
-    oldStatus: "completed",
-    newStatus: "verified",
-  });
+    res.json({
+      status: "resolved",
+      message: "Task completed successfully",
+    });
 
-  res.json({ status: "closed" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };

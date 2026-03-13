@@ -16,15 +16,24 @@ const TaskSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["assigned", "completed", "verified"],
+      enum: ["assigned", "accepted", "in-progress", "resolved"],
       default: "assigned",
     },
 
     proofImages: [String],
 
-    assignedAt: Date,
+    notes: String,
+
+    assignedAt: {
+      type: Date,
+      default: Date.now,
+    },
+
+    acceptedAt: Date,
+
+    startedAt: Date,
+
     completedAt: Date,
-    verifiedAt: Date,
   },
   { timestamps: true }
 );

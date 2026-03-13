@@ -5,9 +5,20 @@ const auth = require("../middleware/auth.middleware");
 const role = require("../middleware/role.middleware");
 const taskController = require("../controllers/task.controller");
 
-router.post("/assign", auth, role(["admin"]), taskController.assignTask);
-router.get("/my", auth, role(["worker"]), taskController.getMyTasks);
-router.patch("/:id/complete", auth, role(["worker"]), taskController.completeTask);
-router.patch("/:id/verify", auth, role(["admin"]), taskController.verifyTask);
+/* Admin assigns worker */
+
+router.post("/assign", auth, role("admin"), taskController.assignTask);
+
+/* Worker dashboard */
+
+router.get("/my", auth, role("worker"), taskController.getMyTasks);
+
+/* Worker actions */
+
+router.patch("/:id/accept", auth, role("worker"), taskController.acceptTask);
+
+router.patch("/:id/start", auth, role("worker"), taskController.startTask);
+
+router.patch("/:id/complete", auth, role("worker"), taskController.completeTask);
 
 module.exports = router;
