@@ -1,71 +1,34 @@
 const express = require("express");
 const router = express.Router();
-const Complaint = require("../models/Complaint.model");
 
-/* ===============================
-   HEATMAP DATA
-================================ */
+const auth = require("../middleware/auth.middleware");
+const role = require("../middleware/role.middleware");
 
-exports.getHeatmap = async (req, res) => {
-  try {
+const analyticsController = require("../controllers/analytics.controller");
 
-    const complaints = await Complaint.find().select(
-      "location issueType status"
-    );
 
-    const heatmap = complaints.map(c => ({
-      lat: c.location.lat,
-      lng: c.location.lng,
-      issueType: c.issueType,
-      status: c.status
-    }));
+router.get("/heatmap", analyticsController.getHeatmap);
 
-    res.json(heatmap);
+router.get(
+  "/department-stats",
+  auth,
+  role(["admin"]),
+  analyticsController.getDepartmentStats
+);
 
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
-exports.getDepartmentStats = async (req, res) => {
-  try {
+router.get(
+  "/worker-performance",
+  auth,
+  role(["admin"]),
+  analyticsController.getWorkerPerformance
+);
 
-    const stats = await Complaint.aggregate([
-      {
-        $group: {
-          _id: "$issueType",
-          count: { $sum: 1 }
-        }
-      }
-    ]);
+router.get(
+  "/hotspots",
+  auth,
+  role(["admin"]),
+  analyticsController.getHotspots
+);
 
-    res.json(stats);
 
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-const Task = require("../models/Task.model");
-
-exports.getWorkerPerformance = async (req, res) => {
-  try {
-
-    const performance = await Task.aggregate([
-      {
-        $match: { status: "resolved" }
-      },
-      {
-        $group: {
-          _id: "$workerId",
-          tasksCompleted: { $sum: 1 }
-        }
-      }
-    ]);
-
-    res.json(performance);
-
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
 module.exports = router;

@@ -1,23 +1,40 @@
 const mongoose = require("mongoose");
 
-const HotspotSchema = new mongoose.Schema(
-  {
-    issueType: String,
-
-    centerLocation: {
-      lat: Number,
-      lng: Number,
+const hotspotSchema = new mongoose.Schema({
+  location: {
+    lat: {
+      type: Number,
+      required: true
     },
-
-    frequency: Number,
-    severityScore: Number,
-    trend: String,
-    riskScore: String,
-    suggestedAction: String,
-
-    lastUpdated: Date,
+    lng: {
+      type: Number,
+      required: true
+    }
   },
-  { timestamps: true }
-);
 
-module.exports = mongoose.model("Hotspot", HotspotSchema);
+  complaintCount: {
+    type: Number,
+    default: 0
+  },
+
+  complaints: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Complaint"
+    }
+  ],
+
+  issueTypes: [
+    {
+      type: String
+    }
+  ],
+
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+
+});
+
+module.exports = mongoose.model("Hotspot", hotspotSchema);

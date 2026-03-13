@@ -25,7 +25,7 @@ app.use("/api/complaints", complaintRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/analytics", analyticsRoutes);
-
+console.log("Analytics routes loaded");
 
 
 app.get("/api/health", (req, res) => {
