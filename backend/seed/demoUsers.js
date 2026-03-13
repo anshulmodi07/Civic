@@ -1,4 +1,9 @@
 module.exports = [
+   {
+    name: "Test Citizen",
+    email: "citizen@test.com",
+    role: "citizen"
+  },
   {
     name: "Admin User",
     email: "admin@test.com",

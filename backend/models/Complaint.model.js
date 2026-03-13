@@ -12,8 +12,8 @@ const ComplaintSchema = new mongoose.Schema(
 
     issueType: {
       type: String,
-      enum: ["water", "electricity", "road", "garbage", "pending"],
-      default: "pending",
+      enum: ["water", "electricity", "road", "garbage"],
+      
     },
 
     priority: {
@@ -28,6 +28,27 @@ const ComplaintSchema = new mongoose.Schema(
     },
 
     images: [String],
+
+    supporters: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+      }
+    ],
+
+    comments: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User"
+        },
+        text: String,
+        createdAt: {
+          type: Date,
+          default: Date.now
+        }
+      }
+    ],
 
     status: {
       type: String,
