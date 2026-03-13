@@ -14,10 +14,10 @@ const UserSchema = new mongoose.Schema(
     },
 
     department: {
-      type: String,
-      enum: ["water", "electricity", "road", "sanitation", null],
-      default: null,
-    },
+  type: String,
+  enum: ["water", "electricity", "road", "sanitation"],
+  default: null,
+},
 
     skills: [{ type: String }],
 
