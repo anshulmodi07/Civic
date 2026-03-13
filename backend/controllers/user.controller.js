@@ -1,14 +1,16 @@
 const User = require("../models/User.model");
 
+/* ===============================
+   GET WORKERS (ADMIN)
+================================ */
+
 exports.getWorkers = async (req, res) => {
   try {
 
     const workers = await User.find({
       role: "worker",
       department: req.user.department
-    }).select(
-      "name department availabilityStatus lastKnownLocation"
-    );
+    }).select("name department availabilityStatus lastKnownLocation");
 
     res.json(workers);
 
@@ -17,42 +19,80 @@ exports.getWorkers = async (req, res) => {
   }
 };
 
+
+/* ===============================
+   UPDATE WORKER AVAILABILITY
+================================ */
+
 exports.updateAvailability = async (req, res) => {
-  const { availabilityStatus } = req.body;
+  try {
 
-  if (req.user.userId !== req.params.id) {
-    return res.status(403).json({ message: "Cannot update other worker" });
+    const { availabilityStatus } = req.body;
+
+    if (!availabilityStatus) {
+      return res.status(400).json({
+        message: "availabilityStatus required"
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.userId,
+      { availabilityStatus },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Worker not found"
+      });
+    }
+
+    res.json({
+      id: user._id,
+      availabilityStatus: user.availabilityStatus
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
   }
-
-  const user = await User.findByIdAndUpdate(
-    req.params.id,
-    { availabilityStatus },
-    { new: true }
-  );
-
-  res.json({
-    id: user._id,
-    availabilityStatus: user.availabilityStatus,
-  });
 };
 
+
+/* ===============================
+   UPDATE WORKER LOCATION
+================================ */
+
 exports.updateLocation = async (req, res) => {
-  const { lat, lng } = req.body;
+  try {
 
-  if (req.user.userId !== req.params.id) {
-    return res.status(403).json({ message: "Cannot update other worker" });
+    const { lat, lng } = req.body;
+
+    if (lat === undefined || lng === undefined) {
+      return res.status(400).json({
+        message: "lat and lng required"
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.userId,
+      {
+        lastKnownLocation: { lat, lng }
+      },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Worker not found"
+      });
+    }
+
+    res.json({
+      id: user._id,
+      lastKnownLocation: user.lastKnownLocation
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
   }
-
-  const user = await User.findByIdAndUpdate(
-    req.params.id,
-    {
-      lastKnownLocation: { lat, lng },
-    },
-    { new: true }
-  );
-
-  res.json({
-    id: user._id,
-    lastKnownLocation: user.lastKnownLocation,
-  });
 };

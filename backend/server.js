@@ -6,6 +6,7 @@ const express = require("express");
 const connectDB = require("./config/db");
 
 const cors = require("cors");
+const userRoutes = require("./routes/user.routes");
 const authRoutes = require("./routes/auth.routes");
 const complaintRoutes = require("./routes/complaint.routes");
 const taskRoutes = require("./routes/task.routes");
@@ -25,6 +26,7 @@ app.use("/api/complaints", complaintRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/users", userRoutes);
 console.log("Analytics routes loaded");
 
 
