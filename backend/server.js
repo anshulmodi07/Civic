@@ -1,6 +1,10 @@
 require("dotenv").config();
 console.log("JWT_SECRET:", process.env.JWT_SECRET);
 const express = require("express");
+
+
+const connectDB = require("./config/db");
+
 const cors = require("cors");
 const authRoutes = require("./routes/auth.routes");
 const complaintRoutes = require("./routes/complaint.routes");
@@ -11,7 +15,6 @@ const analyticsRoutes = require("./routes/analytics.routes");
 
 
 
-const connectDB = require("./config/db");
 
 const app = express();
 
