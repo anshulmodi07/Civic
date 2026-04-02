@@ -12,13 +12,6 @@ import { StyleSheet, Text, View } from "react-native";
 export default function StatusBadge({ status, size = "medium", showIcon = true }) {
   const getStatusConfig = (status) => {
     const configs = {
-      assigned: {
-        color: "#F59E0B",
-        bgColor: "#FEF3C7",
-        textColor: "#F59E0B",
-        icon: "document-text",
-        label: "ASSIGNED",
-      },
       accepted: {
         color: "#8B5CF6",
         bgColor: "#F3E8FF",
@@ -33,13 +26,21 @@ export default function StatusBadge({ status, size = "medium", showIcon = true }
         icon: "time",
         label: "IN PROGRESS",
       },
-      resolved: {
-        color: "#10B981",
-        bgColor: "#D1FAE5",
-        textColor: "#10B981",
-        icon: "checkmark-done",
-        label: "RESOLVED",
-      },
+      completed: {
+  color: "#10B981",
+  bgColor: "#D1FAE5",
+  textColor: "#10B981",
+  icon: "checkmark-done",
+  label: "COMPLETED",
+},
+
+incomplete: {
+  color: "#EF4444",
+  bgColor: "#FEE2E2",
+  textColor: "#EF4444",
+  icon: "close-circle",
+  label: "INCOMPLETE",
+},
       pending: {
         color: "#6B7280",
         bgColor: "#F3F4F6",

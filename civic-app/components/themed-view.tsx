@@ -1,14 +1,9 @@
-import { View, type ViewProps } from 'react-native';
+import { View, Text } from 'react-native';
 
-import { useThemeColor } from '@/hooks/use-theme-color';
-
-export type ThemedViewProps = ViewProps & {
-  lightColor?: string;
-  darkColor?: string;
-};
-
-export function ThemedView({ style, lightColor, darkColor, ...otherProps }: ThemedViewProps) {
-  const backgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, 'background');
-
-  return <View style={[{ backgroundColor }, style]} {...otherProps} />;
+export default function Dashboard() {
+  return (
+    <View style={{ flex: 1, padding: 20 }}>
+      <Text>Dashboard</Text>
+    </View>
+  );
 }
