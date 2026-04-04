@@ -12,7 +12,7 @@ export default function TaskCard({ task, onPress }) {
   opacity: 0.7
 }
   ]}
-  onPress={onPress}
+  onPress={onPress || (() => {})}
   activeOpacity={0.7}
 >
       <View style={styles.cardContent}>

@@ -1,15 +1,25 @@
 import api from "./axios";
+import { USE_DEMO_API } from "./config";
+import { login as demoLogin, getMe as demoGetMe, logoutUser as demoLogout } from "./demoAuth.api";
+
+const normalizeRole = (role) => (role === "client" ? "citizen" : role);
 
 /**
  * Unified login for BOTH roles (worker + client)
  * Backend decides role based on input
  */
-export const login = async ({ email, name, role }) => {
+export const login = async ({ email, name, role, password }) => {
+  const normalizedRole = normalizeRole(role);
+
+  if (USE_DEMO_API) {
+    return demoLogin({ email, name, role: normalizedRole, password });
+  }
+
   try {
     const res = await api.post("/auth/login", {
       email,
       name,
-      role,
+      role: normalizedRole,
     });
 
     return res.data; // expected: { token, user }
@@ -23,6 +33,10 @@ export const login = async ({ email, name, role }) => {
  * Get current logged-in user
  */
 export const getMe = async () => {
+  if (USE_DEMO_API) {
+    return demoGetMe();
+  }
+
   try {
     const res = await api.get("/auth/me");
     return res.data; // expected: { id, role, ... }
@@ -36,6 +50,10 @@ export const getMe = async () => {
  * Optional: Logout API (only if backend supports it)
  */
 export const logoutUser = async () => {
+  if (USE_DEMO_API) {
+    return demoLogout();
+  }
+
   try {
     const res = await api.post("/auth/logout");
     return res.data;

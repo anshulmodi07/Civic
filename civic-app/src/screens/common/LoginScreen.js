@@ -1,53 +1,45 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert, StatusBar } from "react-native";
 import { useContext, useState } from "react";
+import { useRouter } from "expo-router";
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { ScrollView } from "react-native";
+import { AuthContext } from "@/src/context/AuthContext";
 
-export default function LoginScreen({ navigation }) {
+const DEMO_CLIENT_EMAIL = "demo@civicmitra.com";
+const DEMO_WORKER_EMAIL = "worker@demo.com";
+const DEMO_PASSWORD = "demo1234";
+
+export default function LoginScreen() {
+  const router = useRouter();
   const { login } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [role, setRole] = useState("client");
 
-  const [role, setRole] = useState("client"); // 🔥 NEW
+  const handleLogin = async () => {
+    setIsLoading(true);
 
-const handleLogin = async () => {
-  setIsLoading(true);
+    try {
+      await login({
+        email,
+        name: email,
+        role,
+        password,
+      });
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || "Invalid credentials";
+      Alert.alert("Login Failed", message.toString());
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  try {
-    await login({
-      email,
-      name: email, // temporary (backend expects name)
-      role, // 🔥 important
-    });
-
-  } catch (err) {
-    Alert.alert("Login Failed", "Invalid credentials");
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-const clearStorage = async () => {
-  await AsyncStorage.clear();
-  console.log("Storage cleared");
-};
-const testBackend = async () => {
-  try {
-    console.log("Testing backend...");
-
-    const res = await fetch("http://192.168.162.5:5000");
-    const text = await res.text();
-
-    console.log("BACKEND RESPONSE:", text);
-  } catch (err) {
-    console.log("NETWORK ERROR:", err);
-  }
-};
   const fillDemoCredentials = () => {
-    setEmail(DEMO_EMAIL);
+    const demoEmail = role === "worker" ? DEMO_WORKER_EMAIL : DEMO_CLIENT_EMAIL;
+    setEmail(demoEmail);
     setPassword(DEMO_PASSWORD);
   };
 
@@ -144,7 +136,7 @@ const testBackend = async () => {
               activeOpacity={0.7}
             >
               <Ionicons name="flash" size={14} color="#f59e0b" />
-              <Text style={styles.demoText}>Quick Demo: Tap to auto-fill</Text>
+              <Text style={styles.demoText}>Quick Demo: auto-fill client or worker credentials</Text>
             </TouchableOpacity>
 
             <View style={{ flexDirection: "row", marginBottom: 16 }}>
@@ -209,13 +201,10 @@ const testBackend = async () => {
               <View style={styles.dividerLine} />
             </View>
 
-            {/* Register Button */}
             <TouchableOpacity
               style={styles.registerButton}
-              // onPress={() => navigation.navigate("Register")}
-// onPress={() => testBackend()} 
-onPress={() => navigation.navigate("Register")}        
-    activeOpacity={0.8}
+              onPress={() => router.push("/(auth)/register")}
+              activeOpacity={0.8}
             >
               <Ionicons name="person-add-outline" size={20} color="#2563eb" />
               <Text style={styles.registerButtonText}>Create New Account</Text>
@@ -295,11 +284,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 24,
     padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 16px 40px rgba(15, 23, 42, 0.08)',
+      },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 5,
+      },
+    }),
   },
   formTitle: {
     fontSize: 26,
@@ -369,11 +365,18 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#2563eb',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 8px 24px rgba(37, 99, 235, 0.18)',
+      },
+      default: {
+        shadowColor: '#2563eb',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4,
+      },
+    }),
   },
   loginButtonText: {
     fontSize: 17,

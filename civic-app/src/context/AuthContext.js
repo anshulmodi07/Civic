@@ -31,9 +31,9 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // 🔐 LOGIN
-  const login = async ({ email, name, role }) => {
+  const login = async ({ email, name, role, password }) => {
     try {
-      const response = await loginAPI({ email, name, role });
+      const response = await loginAPI({ email, name, role, password });
 
       const token = response.token;
 

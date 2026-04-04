@@ -13,8 +13,9 @@ import {
 import { useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 
-export default function RegisterScreen({ navigation }) {
+export default function RegisterScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,7 +48,7 @@ export default function RegisterScreen({ navigation }) {
         [
           {
             text: "Go to Login",
-            onPress: () => navigation.navigate("Login"),
+            onPress: () => router.push("/login"),
           },
         ]
       );
