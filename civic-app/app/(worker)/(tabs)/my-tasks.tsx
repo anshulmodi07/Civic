@@ -6,9 +6,9 @@ import {
   Pressable,
 } from "react-native";
 import { useState, useCallback } from "react";
-import { getMyTasks, startTask } from "../../../src/api/tasks.api";
+import { getMyTasks, startTask } from "@/src/api/tasks.api";
 import { useFocusEffect, useRouter } from "expo-router";
-import TaskCard from "../../../src/components/TaskCard";
+import TaskCard from "@/src/components/TaskCard";
 import { Text } from "react-native";
 
 export default function MyTasks() {

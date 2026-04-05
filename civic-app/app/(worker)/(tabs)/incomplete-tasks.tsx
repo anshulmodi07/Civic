@@ -1,8 +1,8 @@
 import { View, FlatList } from "react-native";
 import { useState, useCallback } from "react";
 import { useFocusEffect, router } from "expo-router";
-import { getMyTasks } from "../../../src/api/tasks.api";
-import TaskCard from "../../../src/components/TaskCard";
+import { getMyTasks } from "@/src/api/tasks.api";
+import TaskCard from "@/src/components/TaskCard";
 
 
 type Task = {

@@ -5,8 +5,8 @@ import {
   Button,
 } from "react-native";
 import { useEffect, useState } from "react";
-import { getAllTasks, acceptTask } from "../../../src/api/tasks.api";
-import TaskCard from "../../../src/components/TaskCard";
+import { getAllTasks, acceptTask } from "@/src/api/tasks.api";
+import TaskCard from "@/src/components/TaskCard";
 import { useRouter } from "expo-router";
 
 export default function AllTasks() {
