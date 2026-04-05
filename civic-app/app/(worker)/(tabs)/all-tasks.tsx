@@ -41,10 +41,9 @@ export default function AllTasks() {
       <TaskCard
         task={item}
         onPress={() =>
-          router.push({
-            pathname: "/task-detail",
-            params: { task: JSON.stringify(item) },
-          })
+          router.push(
+            `/task-detail?task=${encodeURIComponent(JSON.stringify(item))}`
+          )
         }
       />
 

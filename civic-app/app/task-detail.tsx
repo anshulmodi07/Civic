@@ -1,10 +1,10 @@
 import {
   View,
   Text,
-  Button,
-  TextInput,
-  Image,
   StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState, useEffect } from "react";
@@ -14,21 +14,21 @@ import {
   completeTask,
   getAllTasks,
   getMyTasks,
-} from "../src/api/tasks.api";
+} from "@/src/api/tasks.api";
+import ImagePreview from "@/src/components/ImagePreview";
+import StatusBadge from "@/src/components/StatusBadge";
 
 export default function TaskDetail() {
   const router = useRouter();
   const { task } = useLocalSearchParams();
 
-  // ✅ FIX: handle string | string[]
   const taskString = Array.isArray(task) ? task[0] : task;
-  const parsedTask = JSON.parse(taskString);
+  const parsedTask = JSON.parse(taskString!);
 
   const [currentTask, setCurrentTask] = useState(parsedTask);
   const [note, setNote] = useState("");
-  const [image, setImage] = useState(null);
+  const [image, setImage] = useState<string | null>(null);
 
-  // 🔄 LOAD LATEST TASK
   const loadTask = async () => {
     const allTasks = [
       ...(await getAllTasks()),
@@ -43,7 +43,8 @@ export default function TaskDetail() {
     loadTask();
   }, []);
 
-  // 📸 GALLERY
+  /* ---------------- IMAGE ---------------- */
+
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       quality: 0.7,
@@ -54,7 +55,6 @@ export default function TaskDetail() {
     }
   };
 
-  // 📷 CAMERA
   const openCamera = async () => {
     const result = await ImagePicker.launchCameraAsync({
       quality: 0.7,
@@ -66,107 +66,217 @@ export default function TaskDetail() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* TITLE */}
-      <Text style={styles.title}>{currentTask.issueType}</Text>
+    <ScrollView style={styles.container}>
+      {/* HEADER */}
+      <View style={styles.header}>
+        <Text style={styles.title}>{currentTask.issueType}</Text>
+        <StatusBadge status={currentTask.status} />
+      </View>
 
-      {/* TYPE BASED DETAILS */}
-      {currentTask.type === "campus" ? (
-        <>
-          <Text>📍 {currentTask.landmark}</Text>
-          <Text>🏠 {currentTask.address}</Text>
-        </>
-      ) : (
-        <>
-          <Text>🏢 {currentTask.hostelName}</Text>
-          <Text>
-            📍 Floor {currentTask.floor} | Room {currentTask.room}
-          </Text>
-        </>
-      )}
+      {/* DETAILS CARD */}
+      <View style={styles.card}>
+        {currentTask.type === "campus" ? (
+          <>
+            <Text style={styles.label}>📍 Location</Text>
+            <Text style={styles.value}>{currentTask.landmark}</Text>
 
-      <Text>🕒 {currentTask.reportedAt}</Text>
-      <Text>Description: {currentTask.description}</Text>
+            <Text style={styles.value}>{currentTask.address}</Text>
+          </>
+        ) : (
+          <>
+            <Text style={styles.label}>🏢 Hostel</Text>
+            <Text style={styles.value}>{currentTask.hostelName}</Text>
+
+            <Text style={styles.value}>
+              Floor {currentTask.floor} | Room {currentTask.room}
+            </Text>
+          </>
+        )}
+
+        <Text style={styles.time}>🕒 {currentTask.reportedAt}</Text>
+
+        <Text style={styles.label}>Description</Text>
+        <Text style={styles.description}>
+          {currentTask.description || "No description provided"}
+        </Text>
+      </View>
 
       {/* START BUTTON */}
       {currentTask.status === "accepted" && (
-        <Button
-          title="Start Task"
+        <TouchableOpacity
+          style={styles.primaryButton}
           onPress={async () => {
             await startTask(currentTask.id);
-            router.back(); // 🔥 go back → auto refresh
+            router.back();
           }}
-        />
+        >
+          <Text style={styles.primaryText}>Start Task</Text>
+        </TouchableOpacity>
       )}
 
       {/* IN PROGRESS */}
       {currentTask.status === "in-progress" && (
-        <>
-          <Button title="Upload from Gallery" onPress={pickImage} />
-          <Button title="Open Camera" onPress={openCamera} />
+        <View style={styles.section}>
+          {/* IMAGE ACTIONS */}
+          <View style={styles.row}>
+            <TouchableOpacity style={styles.secondaryBtn} onPress={pickImage}>
+              <Text>Gallery</Text>
+            </TouchableOpacity>
 
+            <TouchableOpacity style={styles.secondaryBtn} onPress={openCamera}>
+              <Text>Camera</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* IMAGE PREVIEW */}
           {image && (
-            <Image source={{ uri: image }} style={styles.image} />
+            <ImagePreview uri={image} size={180} />
           )}
 
+          {/* NOTE */}
           <TextInput
-            placeholder="Enter remarks..."
+            placeholder="Add remarks..."
             value={note}
             onChangeText={setNote}
             style={styles.input}
+            multiline
           />
 
-          <Button
-            title="Complete"
+          {/* ACTIONS */}
+          <TouchableOpacity
+            style={styles.successBtn}
             onPress={async () => {
-              await completeTask(
-                currentTask.id,
-                "completed",
-                note,
-                image
-              );
+              await completeTask(currentTask.id, "completed", note, image || "");
               router.back();
             }}
-          />
+          >
+            <Text style={styles.btnText}>Mark Completed</Text>
+          </TouchableOpacity>
 
-          <Button
-            title="Mark Incomplete"
+          <TouchableOpacity
+            style={styles.dangerBtn}
             onPress={async () => {
-              await completeTask(
-                currentTask.id,
-                "incomplete",
-                note,
-                image
-              );
+              await completeTask(currentTask.id, "incomplete", note, image || "");
               router.back();
             }}
-          />
-        </>
+          >
+            <Text style={styles.btnText}>Mark Incomplete</Text>
+          </TouchableOpacity>
+        </View>
       )}
-    </View>
+    </ScrollView>
   );
 }
 
+/* ---------------- STYLES ---------------- */
+
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
+  container: {
+    flex: 1,
+    backgroundColor: "#f8fafc",
+    padding: 16,
+  },
+
+  header: {
+    marginBottom: 16,
+  },
 
   title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#0f172a",
+    marginBottom: 6,
+  },
+
+  card: {
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+
+  label: {
+    fontSize: 13,
+    color: "#64748b",
+    marginTop: 10,
+  },
+
+  value: {
+    fontSize: 14,
+    color: "#0f172a",
+    fontWeight: "600",
+  },
+
+  description: {
+    marginTop: 6,
+    fontSize: 14,
+    color: "#334155",
+  },
+
+  time: {
+    marginTop: 10,
+    fontSize: 12,
+    color: "#94a3b8",
+  },
+
+  primaryButton: {
+    backgroundColor: "#2563eb",
+    padding: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+
+  primaryText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+
+  section: {
+    gap: 12,
+  },
+
+  row: {
+    flexDirection: "row",
+    gap: 10,
+  },
+
+  secondaryBtn: {
+    flex: 1,
+    padding: 10,
+    backgroundColor: "#e2e8f0",
+    borderRadius: 10,
+    alignItems: "center",
   },
 
   input: {
     borderWidth: 1,
-    padding: 10,
-    marginVertical: 10,
-    borderRadius: 8,
+    borderColor: "#e2e8f0",
+    padding: 12,
+    borderRadius: 12,
+    minHeight: 80,
   },
 
-  image: {
-    width: "100%",
-    height: 200,
-    marginVertical: 10,
-    borderRadius: 10,
+  successBtn: {
+    backgroundColor: "#16a34a",
+    padding: 14,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+
+  dangerBtn: {
+    backgroundColor: "#dc2626",
+    padding: 14,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+
+  btnText: {
+    color: "#fff",
+    fontWeight: "600",
   },
 });

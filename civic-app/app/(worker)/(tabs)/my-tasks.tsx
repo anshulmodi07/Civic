@@ -39,17 +39,17 @@ export default function MyTasks() {
   };
 
   /* ---------------- RENDER ITEM ---------------- */
-  const renderItem = ({ item }: { item: Task }) => (
-    <View style={styles.cardWrapper}>
-      <TaskCard
-        task={item}
-        onPress={() =>
-          router.push({
-            pathname: "/task-detail",
-            params: { task: JSON.stringify(item) },
-          })
-        }
-      />
+ const renderItem = ({ item }: { item: Task }) => (
+  <View style={styles.cardWrapper}>
+    <TaskCard
+      task={item}
+      onPress={() =>
+        router.push(
+          `/task-detail?task=${encodeURIComponent(JSON.stringify(item))}`
+        )
+      }
+    />
+
 
       {/* ACTION SECTION */}
       <View style={styles.actions}>
