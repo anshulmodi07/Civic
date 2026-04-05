@@ -5,29 +5,32 @@ import { AuthContext, AuthProvider } from "@/src/context/AuthContext";
 function RootLayoutInner() {
   const { user, loading } = useContext(AuthContext);
   const router = useRouter();
-  const segments = useSegments() as string[];
+  const segments = useSegments();
 
   useEffect(() => {
     if (loading) return;
 
-    const isAuthRoute = segments.includes("(auth)");
-    const isWorkerRoute = segments.includes("(worker)");
+    const inAuthGroup = segments[0] === "(auth)";
+    const inWorkerGroup = segments[0] === "(worker)";
 
-    if (!user && !isAuthRoute) {
+    // ❌ Not logged in → go to login
+    if (!user && !inAuthGroup) {
       router.replace("/login");
       return;
     }
 
-    if (user?.role === "worker" && !isWorkerRoute) {
+    // ✅ Worker → force worker dashboard
+    if (user?.role === "worker" && !inWorkerGroup) {
       router.replace("/dashboard");
       return;
     }
 
-    if (user && user.role !== "worker" && isAuthRoute) {
-      router.replace("/");
+    // ❌ Logged in user trying auth pages
+    if (user && inAuthGroup) {
+      router.replace("/dashboard");
       return;
     }
-  }, [user, loading, segments, router]);
+  }, [user, loading, segments]);
 
   if (loading) return null;
 
