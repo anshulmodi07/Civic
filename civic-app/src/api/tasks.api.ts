@@ -1,6 +1,10 @@
 // 📦 MOCK DATABASE (frontend only for now)
 
-let tasks = [
+import { Task } from "@/src/types/task";
+
+/* ---------------- MOCK DATA ---------------- */
+
+let tasks: Task[] = [
   {
     id: "1",
     type: "campus",
@@ -32,42 +36,49 @@ let tasks = [
   },
 ];
 
+/* ---------------- GET ALL TASKS ---------------- */
+// Only pending tasks
 
-// 📌 GET ALL TASKS (only pending)
-export const getAllTasks = async () => {
+export const getAllTasks = async (): Promise<Task[]> => {
   return tasks.filter((t) => t.status === "pending");
 };
 
+/* ---------------- MY TASKS ---------------- */
+// accepted + in-progress + completed + incomplete
 
-// 📌 MY TASKS (accepted + in-progress + completed + incomplete)
-export const getMyTasks = async () => {
+export const getMyTasks = async (): Promise<Task[]> => {
   return tasks.filter((t) => t.status !== "pending");
 };
 
+/* ---------------- ACCEPT TASK ---------------- */
 
-// 📌 ACCEPT TASK
-export const acceptTask = async (id) => {
+export const acceptTask = async (id: string): Promise<void> => {
   tasks = tasks.map((t) =>
     t.id === id ? { ...t, status: "accepted" } : t
   );
 };
 
+/* ---------------- START TASK ---------------- */
 
-// 📌 START TASK
-export const startTask = async (id) => {
+export const startTask = async (id: string): Promise<void> => {
   tasks = tasks.map((t) =>
     t.id === id ? { ...t, status: "in-progress" } : t
   );
 };
 
+/* ---------------- COMPLETE / INCOMPLETE ---------------- */
 
-// 📌 COMPLETE / INCOMPLETE TASK
-export const completeTask = async (id, status, note, image) => {
+export const completeTask = async (
+  id: string,
+  status: "completed" | "incomplete",
+  note?: string,
+  image?: string
+): Promise<void> => {
   tasks = tasks.map((t) =>
     t.id === id
       ? {
           ...t,
-          status: status, // "completed" or "incomplete"
+          status,
           note: note || "",
           completedImage: image || "",
           completedAt: new Date().toLocaleString(),
