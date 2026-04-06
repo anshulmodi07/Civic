@@ -28,7 +28,7 @@ export default function TaskDetail() {
   const parsedTask = JSON.parse(taskString!);
 
   const [currentTask, setCurrentTask] = useState(parsedTask);
-  const [note, setNote] = useState("");
+  
   const [image, setImage] = useState<string | null>(null);
 
   // Modal state
@@ -152,13 +152,7 @@ const handleConfirm = async () => {
 
           {image && <ImagePreview uri={image} size={180} />}
 
-          <TextInput
-            placeholder="Add remarks..."
-            value={note}
-            onChangeText={setNote}
-            style={styles.input}
-            multiline
-          />
+          
 
           <TouchableOpacity
             style={styles.successBtn}
@@ -313,14 +307,6 @@ const styles = StyleSheet.create({
   secondaryBtnText: {
     fontWeight: "600",
     color: "#334155",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    padding: 12,
-    borderRadius: 12,
-    minHeight: 80,
-    backgroundColor: "#fff",
   },
   successBtn: {
     backgroundColor: "#16a34a",
