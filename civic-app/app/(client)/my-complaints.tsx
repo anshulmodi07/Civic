@@ -10,7 +10,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { getMyComplaints } from "@/src/api/complaint.api";
+import { getMyComplaints, toggleUpvote } from "@/src/api/complaint.api";
 import { checkSLA } from "@/src/utils/sla";
 
 type FilterValue = "all" | "pending" | "in_progress" | "resolved";
@@ -31,6 +31,7 @@ export default function MyComplaints() {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<FilterValue>("all");
+  const [upvotingIds, setUpvotingIds] = useState<string[]>([]);
 
   useEffect(() => {
     const loadComplaints = async () => {
@@ -75,6 +76,24 @@ export default function MyComplaints() {
     pending: complaints.filter((item) => item.status === "pending").length,
     in_progress: complaints.filter((item) => item.status === "in_progress").length,
     resolved: complaints.filter((item) => item.status === "resolved").length,
+  };
+
+  const handleToggleSupport = async (complaintId: string) => {
+    if (upvotingIds.includes(complaintId)) return;
+    setUpvotingIds((prev) => [...prev, complaintId]);
+
+    try {
+      const response = await toggleUpvote(complaintId);
+      setComplaints((prev) =>
+        prev.map((item) =>
+          item._id === complaintId ? { ...item, upvotes: response.upvotes } : item
+        )
+      );
+    } catch (error) {
+      console.log("Support action failed:", error);
+    } finally {
+      setUpvotingIds((prev) => prev.filter((id) => id !== complaintId));
+    }
   };
 
   const renderComplaint = ({ item }: { item: Complaint }) => {
@@ -126,6 +145,28 @@ export default function MyComplaints() {
               <Text style={styles.slaText}>SLA</Text>
             </View>
           )}
+          <TouchableOpacity
+            style={[styles.supportButton, upvotingIds.includes(item._id) && styles.supportButtonActive]}
+            activeOpacity={0.8}
+            onPress={(event) => {
+              event.stopPropagation?.();
+              handleToggleSupport(item._id);
+            }}
+          >
+            <Ionicons
+              name="thumbs-up"
+              size={14}
+              color={upvotingIds.includes(item._id) ? "#fff" : "#06b6d4"}
+            />
+            <Text
+              style={[
+                styles.supportText,
+                upvotingIds.includes(item._id) && styles.supportTextActive,
+              ]}
+            >
+              {item.upvotes || 0}
+            </Text>
+          </TouchableOpacity>
         </View>
       </TouchableOpacity>
     );
@@ -313,6 +354,26 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "600",
     color: "#2563eb",
+  },
+  supportButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "#eff6ff",
+  },
+  supportButtonActive: {
+    backgroundColor: "#2563eb",
+  },
+  supportText: {
+    marginLeft: 8,
+    color: "#06b6d4",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  supportTextActive: {
+    color: "#fff",
   },
   slaBadge: {
     flexDirection: "row",

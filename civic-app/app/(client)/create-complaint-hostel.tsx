@@ -472,7 +472,7 @@ import {
   Animated,
   Platform,
 } from "react-native";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -491,24 +491,35 @@ import {
 import { createComplaint } from "@/src/api/complaint.api";
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
-// Hostel uses a warmer amber/teal palette to differentiate from campus blue
+// Hostel uses a light blue theme for a brighter, more approachable report flow
 const C = {
-  bg: "#0f172a",
-  surface: "#1e293b",
-  surfaceElevated: "#263347",
-  border: "#334155",
-  borderFocus: "#f59e0b",
-  accent: "#f59e0b",       // amber-400  (hostel = warm tones)
-  accentDim: "#d97706",
-  success: "#34d399",
-  error: "#f87171",
-  warning: "#fbbf24",
-  textPrimary: "#f1f5f9",
-  textSecondary: "#94a3b8",
-  textMuted: "#475569",
-  gradientHeader: ["#451a03", "#78350f"],
-  gradientBtn: ["#f59e0b", "#d97706"],
-  gradientBtnDisabled: ["#334155", "#1e293b"],
+  bg: "#eff6ff",
+  surface: "#ffffff",
+  surfaceElevated: "#dbeafe",
+  border: "#c7d2fe",
+  borderFocus: "#60a5fa",
+  accent: "#2563eb",
+  accentDim: "#3b82f6",
+  success: "#165aa3",
+  error: "#1201ff",
+  warning: "#00fff2",
+  textPrimary: "#0f172a",
+  textSecondary: "#334155",
+  textMuted: "#64748b",
+  gradientHeader: ["#60a5fa", "#2563eb"] as [string, string],
+  gradientBtn: ["#3b82f6", "#2563eb"] as [string, string],
+  gradientBtnDisabled: ["#cbd5e1", "#94a3b8"] as [string, string],
+};
+
+type IconName = ComponentProps<typeof Ionicons>["name"];
+
+type FieldErrors = {
+  hostelName?: string | null;
+  floor?: string | null;
+  roomNumber?: string | null;
+  issueType?: string | null;
+  description?: string | null;
+  gps?: string | null;
 };
 
 const MAX_IMAGES = 5;
@@ -518,7 +529,14 @@ const FLOORS = ["Ground", "1", "2", "3", "4", "5", "6", "7", "8"].map(
 );
 
 // ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
-function FormField({ label, icon, error, required, hint, children }) {
+function FormField({ label, icon, error, required, hint, children }: {
+  label: string;
+  icon: IconName;
+  error?: string | null;
+  required?: boolean;
+  hint?: string;
+  children: ReactNode;
+}) {
   return (
     <View style={fs.fieldWrapper}>
       <View style={fs.labelRow}>
@@ -532,7 +550,7 @@ function FormField({ label, icon, error, required, hint, children }) {
   );
 }
 
-function SectionHeader({ icon, title, optional = false }) {
+function SectionHeader({ icon, title, optional = false }: { icon: IconName; title: string; optional?: boolean }) {
   return (
     <View style={fs.sectionHeader}>
       <View style={fs.sectionIconWrap}>
@@ -544,7 +562,11 @@ function SectionHeader({ icon, title, optional = false }) {
   );
 }
 
-function LocationCard({ loading, location, onRetry }) {
+function LocationCard({ loading, location, onRetry }: {
+  loading: boolean;
+  location: { lat: number; lng: number } | null;
+  onRetry: () => void;
+}) {
   if (loading) {
     return (
       <View style={[fs.locationCard, fs.locationPending]}>
@@ -576,7 +598,7 @@ function LocationCard({ loading, location, onRetry }) {
   );
 }
 
-function ImageThumb({ uri, onRemove }) {
+function ImageThumb({ uri, onRemove }: { uri: string; onRemove: () => void }) {
   return (
     <View style={fs.thumb}>
       <Image source={{ uri }} style={fs.thumbImage} resizeMode="cover" />
@@ -589,7 +611,12 @@ function ImageThumb({ uri, onRemove }) {
 
 // ─── QUICK-SELECT CHIPS ───────────────────────────────────────────────────────
 // Lets the user pick floor or common room numbers fast via chips
-function ChipRow({ items, selected, onSelect, color }) {
+function ChipRow({ items, selected, onSelect, color }: {
+  items: Array<{ label: string; value: string | null }>;
+  selected: string;
+  onSelect: (value: string | null) => void;
+  color: string;
+}) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
       <View style={{ flexDirection: "row", gap: 8, paddingRight: 12 }}>
@@ -616,20 +643,20 @@ export default function CreateComplaintHostel() {
   const router = useRouter();
 
   // Form state
-  const [hostelName, setHostelName]   = useState(null);
-  const [floor, setFloor]             = useState("");
-  const [roomNumber, setRoomNumber]   = useState("");
-  const [issueType, setIssueType]     = useState(null);
+  const [hostelName, setHostelName] = useState<string | null>(null);
+  const [floor, setFloor] = useState("");
+  const [roomNumber, setRoomNumber] = useState("");
+  const [issueType, setIssueType] = useState<string | null>(null);
   const [description, setDescription] = useState("");
-  const [images, setImages]           = useState([]);
+  const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
 
   // GPS
-  const [gpsLocation, setGpsLocation] = useState(null);
-  const [loadingGps, setLoadingGps]   = useState(true);
+  const [gpsLocation, setGpsLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [loadingGps, setLoadingGps] = useState(true);
 
   // UI
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [fieldErrors, setFieldErrors]   = useState({});
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   // Animations
   const fadeAnim  = useRef(new Animated.Value(0)).current;
@@ -679,11 +706,11 @@ export default function CreateComplaintHostel() {
     if (!result.canceled) setImages((prev) => [...prev, result.assets[0]]);
   };
 
-  const removeImage = (index) => setImages((prev) => prev.filter((_, i) => i !== index));
+  const removeImage = (index: number) => setImages((prev) => prev.filter((_, i) => i !== index));
 
   // ── VALIDATION ─────────────────────────────────────────────────────────────
   const validate = () => {
-    const errors = {};
+    const errors: FieldErrors = {};
     if (!hostelName)                              errors.hostelName   = "Please select your hostel.";
     if (!floor.trim())                            errors.floor        = "Please enter the floor number.";
     if (!roomNumber.trim())                       errors.roomNumber   = "Please enter your room number.";
@@ -705,20 +732,21 @@ export default function CreateComplaintHostel() {
     setIsSubmitting(true);
 
     const formPayload = new FormData();
-    formPayload.append("type",        "hostel");
-    formPayload.append("hostelName",  hostelName);
-    formPayload.append("floor",       floor.trim());
-    formPayload.append("roomNumber",  roomNumber.trim());
-    formPayload.append("issueType",   issueType);
+    formPayload.append("type", "hostel");
+    formPayload.append("hostelName", hostelName ?? "");
+    formPayload.append("floor", floor.trim());
+    formPayload.append("roomNumber", roomNumber.trim());
+    formPayload.append("issueType", issueType ?? "");
     formPayload.append("description", description.trim());
-    formPayload.append("location",    JSON.stringify(gpsLocation));
+    formPayload.append("location", JSON.stringify(gpsLocation));
 
     images.forEach((img, i) => {
-      formPayload.append("images", {
-        uri:  img.uri,
+      const imageFile: any = {
+        uri: img.uri,
         name: `hostel_photo_${i}_${Date.now()}.jpg`,
         type: "image/jpeg",
-      });
+      };
+      formPayload.append("images", imageFile);
     });
 
     try {
@@ -969,13 +997,13 @@ const fs = StyleSheet.create({
   },
   backBtn: {
     width: 38, height: 38, borderRadius: 19,
-    backgroundColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
     justifyContent: "center", alignItems: "center",
   },
   headerCenter: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
   headerIconWrap: {
     width: 32, height: 32, borderRadius: 8,
-    backgroundColor: "rgba(245,158,11,0.18)",
+    backgroundColor: "rgba(11, 193, 249, 0.18)",
     justifyContent: "center", alignItems: "center",
   },
   headerTitle: { fontSize: 18, fontWeight: "700", color: "#fff", letterSpacing: 0.3 },
@@ -992,8 +1020,8 @@ const fs = StyleSheet.create({
   // Info Banner
   infoBanner: {
     flexDirection: "row", alignItems: "flex-start", gap: 10,
-    backgroundColor: "rgba(245,158,11,0.07)",
-    borderWidth: 1, borderColor: "rgba(245,158,11,0.22)",
+    backgroundColor: "rgba(0, 183, 255, 0.07)",
+    borderWidth: 1, borderColor: "rgba(10, 153, 255, 0.22)",
     borderRadius: 12, padding: 14, marginBottom: 24,
   },
   infoText: { flex: 1, fontSize: 13, color: C.textSecondary, lineHeight: 20 },

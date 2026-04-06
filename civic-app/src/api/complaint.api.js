@@ -272,7 +272,7 @@ const createDemoStore = () => {
       status: COMPLAINT_STATUS.IN_PROGRESS,
       createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
       updatedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-      location: { lat: 28.5468, lng: 77.2741 },
+      location: { lat: 28.7450, lng: 77.1120 },
       upvotes: 6,
       upvotedBy: ["user_demo"],
       images: [],
@@ -282,14 +282,14 @@ const createDemoStore = () => {
       _id: "c002",
       type: COMPLAINT_TYPES.CAMPUS,
       issueType: "plumber",
-      locationLandmark: "cafeteria",
-      locationAddress: "Near Cafeteria Block B",
+      locationLandmark: "Mess Block",
+      locationAddress: "Near Mess 2, NIT Delhi",
       description:
-        "Water leakage in the washing area, creating water puddles and floor damage. Risk of slip and fall.",
+        "Water leakage in the dining hall area, creating puddles and slippery floors. Needs urgent repair.",
       status: COMPLAINT_STATUS.ASSIGNED,
       createdAt: new Date(Date.now() - 10 * 86400000).toISOString(),
       updatedAt: new Date(Date.now() - 8 * 86400000).toISOString(),
-      location: { lat: 28.5412, lng: 77.2698 },
+      location: { lat: 28.7435, lng: 77.1140 },
       upvotes: 3,
       upvotedBy: [],
       images: [],
@@ -302,11 +302,11 @@ const createDemoStore = () => {
       floor: "2",
       roomNumber: "205",
       issueType: "ac",
-      description: "AC unit is not cooling properly, compressor seems faulty. Temperature is unbearable.",
+      description: "AC unit is not cooling properly in the girls' hostel common room.",
       status: COMPLAINT_STATUS.PENDING,
       createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
       updatedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-      location: { lat: 28.5489, lng: 77.2769 },
+      location: { lat: 28.7462, lng: 77.1105 },
       upvotes: 4,
       upvotedBy: [],
       images: [],
@@ -316,14 +316,14 @@ const createDemoStore = () => {
       _id: "c004",
       type: COMPLAINT_TYPES.CAMPUS,
       issueType: "sanitation",
-      locationLandmark: "main_building",
-      locationAddress: "Entrance area, main gate",
+      locationLandmark: "Main Gate",
+      locationAddress: "Entrance area, NIT Delhi main gate",
       description:
-        "Trash bins overflowing for 2 days, garbage scattered on ground. Pest infestation risk is high.",
+        "Trash bins overflowing near the main gate for 2 days. Garbage is spreading and attracting pests.",
       status: COMPLAINT_STATUS.CLOSED,
       createdAt: new Date(Date.now() - 18 * 86400000).toISOString(),
       updatedAt: new Date(Date.now() - 15 * 86400000).toISOString(),
-      location: { lat: 28.5435, lng: 77.2715 },
+      location: { lat: 28.7447, lng: 77.1168 },
       upvotes: 4,
       upvotedBy: [],
       images: [],
@@ -337,11 +337,11 @@ const createDemoStore = () => {
       roomNumber: "108",
       issueType: "wifi",
       description:
-        "WiFi signal is extremely weak in this wing, unable to connect for video calls or remote classes.",
+        "WiFi signal is extremely weak in the girls' hostel block, making online classes difficult.",
       status: COMPLAINT_STATUS.PENDING,
       createdAt: new Date(Date.now() - 1 * 86400000).toISOString(),
       updatedAt: new Date(Date.now() - 1 * 86400000).toISOString(),
-      location: { lat: 28.5501, lng: 77.2732 },
+      location: { lat: 28.7471, lng: 77.1149 },
       upvotes: 2,
       upvotedBy: [],
       images: [],
@@ -351,14 +351,14 @@ const createDemoStore = () => {
       _id: "c006",
       type: COMPLAINT_TYPES.CAMPUS,
       issueType: "construction",
-      locationLandmark: "sports_complex",
-      locationAddress: "Sports Complex renovation area",
+      locationLandmark: "Sports Complex",
+      locationAddress: "NIT Delhi sports complex",
       description:
-        "Construction debris on the pathway, creating a safety hazard for students passing through.",
+        "Construction debris on the pathway, creating a safety hazard for students passing between buildings.",
       status: COMPLAINT_STATUS.IN_PROGRESS,
       createdAt: new Date(Date.now() - 7 * 86400000).toISOString(),
       updatedAt: new Date(Date.now() - 5 * 86400000).toISOString(),
-      location: { lat: 28.5458, lng: 77.2758 },
+      location: { lat: 28.7423, lng: 77.1113 },
       upvotes: 7,
       upvotedBy: [],
       images: [],
@@ -581,7 +581,7 @@ export const createComplaint = async (payload) => {
  * Toggles upvote on a complaint for the given userId.
  * Returns { upvotes: number, upvoted: boolean }
  */
-export const toggleUpvote = async (complaintId, userId = "demo_user") => {
+export const toggleUpvote = async (complaintId, userId = "user_demo") => {
   if (USE_DEMO_API) {
     await delay(200);
     const result = DEMO_STORE.toggleUpvote(complaintId, userId);
@@ -589,7 +589,7 @@ export const toggleUpvote = async (complaintId, userId = "demo_user") => {
     return result;
   }
 
-  const response = await api.post(`/complaints/${complaintId}/upvote`);
+  const response = await api.post(`/complaints/${complaintId}/support`);
   return response.data;
 };
 

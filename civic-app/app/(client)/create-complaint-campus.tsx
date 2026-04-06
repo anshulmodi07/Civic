@@ -444,8 +444,9 @@ import {
   Animated,
   Platform,
 } from "react-native";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { LinearGradient } from "expo-linear-gradient";
+import type { ComponentProps } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as Location from "expo-location";
@@ -464,22 +465,22 @@ import { createComplaint } from "@/src/api/complaint.api";
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 const C = {
-  bg: "#0f172a",
-  surface: "#1e293b",
-  surfaceElevated: "#263347",
-  border: "#334155",
-  borderFocus: "#38bdf8",
-  accent: "#38bdf8",       // sky-400
-  accentDim: "#0ea5e9",
-  success: "#34d399",
-  error: "#f87171",
+  bg: "#f0fdf4",
+  surface: "#ffffff",
+  surfaceElevated: "#ecfdf5",
+  border: "#86efac",
+  borderFocus: "#22c55e",
+  accent: "#16a34a",       // green-700
+  accentDim: "#22c55e",
+  success: "#16a34a",
+  error: "#ef4444",
   warning: "#fbbf24",
-  textPrimary: "#f1f5f9",
-  textSecondary: "#94a3b8",
-  textMuted: "#475569",
-  gradientHeader: ["#0c4a6e", "#075985"],
-  gradientBtn: ["#0ea5e9", "#0284c7"],
-  gradientBtnDisabled: ["#334155", "#1e293b"],
+  textPrimary: "#0f172a",
+  textSecondary: "#166534",
+  textMuted: "#4b5563",
+  gradientHeader: ["#bbf7d0", "#4ade80"] as [string, string],
+  gradientBtn: ["#22c55e", "#16a34a"] as [string, string],
+  gradientBtnDisabled: ["#d1fae5", "#a7f3d0"] as [string, string],
 };
 
 const MAX_IMAGES = 5;
@@ -488,7 +489,23 @@ const MIN_DESC_LENGTH = 20;
 // ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
 
 /** Animated label + input field with focus border */
-function FormField({ label, icon, error, required, children }) {
+type FieldErrors = {
+  locationLandmark?: string | null;
+  locationAddress?: string | null;
+  issueType?: string | null;
+  description?: string | null;
+  gps?: string | null;
+};
+
+type IconName = ComponentProps<typeof Ionicons>["name"];
+
+function FormField({ label, icon, error, required, children }: {
+  label: string;
+  icon: IconName;
+  error?: string | null;
+  required?: boolean;
+  children: ReactNode;
+}) {
   return (
     <View style={fs.fieldWrapper}>
       <View style={fs.labelRow}>
@@ -505,7 +522,7 @@ function FormField({ label, icon, error, required, children }) {
 }
 
 /** Step indicator pill at the top */
-function StepBadge({ step, total, label }) {
+function StepBadge({ step, total, label }: { step: number; total: number; label: string }) {
   return (
     <View style={fs.stepBadge}>
       <Text style={fs.stepText}>
@@ -516,7 +533,11 @@ function StepBadge({ step, total, label }) {
 }
 
 /** Location status card */
-function LocationCard({ loading, location, onRetry }) {
+function LocationCard({ loading, location, onRetry }: {
+  loading: boolean;
+  location: { lat: number; lng: number } | null;
+  onRetry: () => void;
+}) {
   if (loading) {
     return (
       <View style={[fs.locationCard, fs.locationPending]}>
@@ -553,7 +574,7 @@ function LocationCard({ loading, location, onRetry }) {
 }
 
 /** Single image thumbnail with remove button */
-function ImageThumb({ uri, onRemove }) {
+function ImageThumb({ uri, onRemove }: { uri: string; onRemove: () => void }) {
   return (
     <View style={fs.thumb}>
       <Image source={{ uri }} style={fs.thumbImage} resizeMode="cover" />
@@ -569,20 +590,20 @@ export default function CreateComplaintCampus() {
   const router = useRouter();
 
   // Form state
-  const [locationLandmark, setLocationLandmark] = useState(null);
-  const [locationAddress, setLocationAddress]   = useState("");
-  const [issueType, setIssueType]               = useState(null);
-  const [description, setDescription]           = useState("");
-  const [images, setImages]                     = useState([]);
+  const [locationLandmark, setLocationLandmark] = useState<string | null>(null);
+  const [locationAddress, setLocationAddress] = useState("");
+  const [issueType, setIssueType] = useState<string | null>(null);
+  const [description, setDescription] = useState("");
+  const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
 
   // GPS
-  const [gpsLocation, setGpsLocation]   = useState(null);
-  const [loadingGps, setLoadingGps]     = useState(true);
+  const [gpsLocation, setGpsLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [loadingGps, setLoadingGps] = useState(true);
 
   // UI
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [fieldErrors, setFieldErrors]   = useState({});
-  const [submitted, setSubmitted]       = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [submitted, setSubmitted] = useState(false);
 
   // Animations
   const fadeAnim  = useRef(new Animated.Value(0)).current;
@@ -634,11 +655,11 @@ export default function CreateComplaintCampus() {
     if (!result.canceled) setImages((prev) => [...prev, result.assets[0]]);
   };
 
-  const removeImage = (index) => setImages((prev) => prev.filter((_, i) => i !== index));
+  const removeImage = (index: number) => setImages((prev) => prev.filter((_, i) => i !== index));
 
   // ── VALIDATION ─────────────────────────────────────────────────────────────
   const validate = () => {
-    const errors = {};
+    const errors: FieldErrors = {};
     if (!locationLandmark)
       errors.locationLandmark = "Please select a landmark.";
     if (!locationAddress.trim())
@@ -664,18 +685,19 @@ export default function CreateComplaintCampus() {
 
     const formPayload = new FormData();
     formPayload.append("type", "campus");
-    formPayload.append("locationLandmark", locationLandmark);
-    formPayload.append("locationAddress",  locationAddress.trim());
-    formPayload.append("issueType",        issueType);
-    formPayload.append("description",      description.trim());
-    formPayload.append("location",         JSON.stringify(gpsLocation));
+    formPayload.append("locationLandmark", locationLandmark ?? "");
+    formPayload.append("locationAddress", locationAddress.trim());
+    formPayload.append("issueType", issueType ?? "");
+    formPayload.append("description", description.trim());
+    formPayload.append("location", JSON.stringify(gpsLocation));
 
     images.forEach((img, i) => {
-      formPayload.append("images", {
-        uri:  img.uri,
+      const imageFile: any = {
+        uri: img.uri,
         name: `campus_photo_${i}_${Date.now()}.jpg`,
         type: "image/jpeg",
-      });
+      };
+      formPayload.append("images", imageFile);
     });
 
     try {
@@ -895,7 +917,7 @@ export default function CreateComplaintCampus() {
 }
 
 // ─── SECTION HEADER ──────────────────────────────────────────────────────────
-function SectionHeader({ icon, title, optional = false }) {
+function SectionHeader({ icon, title, optional = false }: { icon: IconName; title: string; optional?: boolean }) {
   return (
     <View style={fs.sectionHeader}>
       <View style={fs.sectionIconWrap}>
@@ -973,6 +995,19 @@ const fs = StyleSheet.create({
   label: { fontSize: 14, fontWeight: "600", color: C.textPrimary },
   required: { color: C.error },
   fieldError: { fontSize: 12, color: C.error, marginTop: 4, marginLeft: 2 },
+  stepBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: C.surface,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    marginBottom: 12,
+  },
+  stepText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: C.textSecondary,
+  },
 
   // Inputs
   pickerBox: {

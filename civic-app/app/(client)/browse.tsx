@@ -13,7 +13,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import { getAllComplaints } from "@/src/api/complaint.api";
+import { getAllComplaints, toggleUpvote } from "@/src/api/complaint.api";
 import { ISSUE_TYPES } from "@/src/utils/constants";
 
 type Complaint = {
@@ -38,6 +38,7 @@ export default function BrowseComplaints() {
   const [issueTypeFilter, setIssueTypeFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"popular" | "recent">("recent");
   const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [upvotingIds, setUpvotingIds] = useState<string[]>([]);
 
   // Load complaints
   useEffect(() => {
@@ -54,6 +55,24 @@ export default function BrowseComplaints() {
     };
     loadComplaints();
   }, []);
+
+  const handleToggleSupport = async (complaintId: string) => {
+    if (upvotingIds.includes(complaintId)) return;
+    setUpvotingIds((prev) => [...prev, complaintId]);
+
+    try {
+      const response = await toggleUpvote(complaintId);
+      setComplaints((prev) =>
+        prev.map((item) =>
+          item._id === complaintId ? { ...item, upvotes: response.upvotes } : item
+        )
+      );
+    } catch (error) {
+      console.log("Support action failed:", error);
+    } finally {
+      setUpvotingIds((prev) => prev.filter((id) => id !== complaintId));
+    }
+  };
 
   // Apply filters & search
   useEffect(() => {
@@ -147,10 +166,29 @@ export default function BrowseComplaints() {
       <View style={styles.cardFooter}>
         <Text style={styles.typeLabel}>{item.type === "hostel" ? "Hostel" : "Campus"}</Text>
         <View style={styles.statsRow}>
-          <View style={styles.stat}>
-            <Ionicons name="thumbs-up" size={14} color="#06b6d4" />
-            <Text style={styles.statText}>{item.upvotes || 0}</Text>
-          </View>
+          <TouchableOpacity
+            style={[styles.supportButton, upvotingIds.includes(item._id) && styles.supportButtonActive]}
+            activeOpacity={0.8}
+            onPress={(event) => {
+              event.stopPropagation?.();
+              handleToggleSupport(item._id);
+            }}
+          >
+            <Ionicons
+              name="thumbs-up"
+              size={14}
+              color={upvotingIds.includes(item._id) ? "#fff" : "#06b6d4"}
+            />
+            <Text
+              style={[
+                styles.statText,
+                { marginLeft: 8 },
+                upvotingIds.includes(item._id) && { color: "#fff" },
+              ]}
+            >
+              {item.upvotes || 0}
+            </Text>
+          </TouchableOpacity>
           <Text style={styles.timeText}>{timeAgo(item.createdAt)}</Text>
         </View>
       </View>
@@ -391,6 +429,17 @@ const styles = StyleSheet.create({
   typeLabel: { fontSize: 12, fontWeight: "600", color: "#64748b", textTransform: "uppercase", letterSpacing: 0.3 },
   statsRow: { flexDirection: "row", alignItems: "center", gap: 16 },
   stat: { flexDirection: "row", alignItems: "center", gap: 4 },
+  supportButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "#eff6ff",
+  },
+  supportButtonActive: {
+    backgroundColor: "#2563eb",
+  },
   statText: { fontSize: 13, fontWeight: "600", color: "#06b6d4" },
   timeText: { fontSize: 12, color: "#94a3b8" },
   center: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#f8fafc" },

@@ -2,11 +2,11 @@ import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, StatusBar,
 import { useEffect, useState } from "react";
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-// import { getComplaintById, getComplaintTimeline, supportComplaint } from "../../api/complaint.api";
+import { getComplaintById, toggleUpvote } from "../../api/complaint.api";
 import StatusBadge from "../../components/StatusBadge";
 import { TextInput } from "react-native";
 // import { addComment, getComments } from "../../api/comment.api";
-import api from "../../api/axios";
+// import api from "../../api/axios";
 
 const { width } = Dimensions.get('window');
 
@@ -156,16 +156,17 @@ export default function ComplaintDetailScreen({ route, navigation }) {
   }, []);
 
   const loadComplaint = async () => {
-  try {
-    const res = await api.get(`/complaints/${id}`);
-    setComplaint(res.data);
-    setSupportCount(res.data.supporters?.length || 0);
-  } catch (err) {
-    console.log(err);
-  } finally {
-    setIsLoading(false);
-  }
-};
+    try {
+      const data = await getComplaintById(id);
+      setComplaint(data);
+      setSupportCount(data.supporters?.length || 0);
+      setHasSupported(data.supporters?.includes("user_demo") || false);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const loadComments = async () => {
     try {
@@ -190,10 +191,21 @@ export default function ComplaintDetailScreen({ route, navigation }) {
     setCommentInput("");
   };
 
+  const [isSupporting, setIsSupporting] = useState(false);
+
   const handleSupport = async () => {
-    if (hasSupported) return;
-    setSupportCount((prev) => prev + 1);
-    setHasSupported(true);
+    if (hasSupported || isSupporting) return;
+    setIsSupporting(true);
+
+    try {
+      const result = await toggleUpvote(id);
+      setSupportCount(result.upvotes);
+      setHasSupported(result.upvoted);
+    } catch (err) {
+      console.log("Support failed", err);
+    } finally {
+      setIsSupporting(false);
+    }
   };
 
   const getStatusColor = (status) => {
