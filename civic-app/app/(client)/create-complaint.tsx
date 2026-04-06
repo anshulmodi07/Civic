@@ -1,304 +1,138 @@
-import { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  Alert,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, StatusBar } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { createComplaint } from "@/src/api/complaint.api";
-import { ISSUE_TYPES } from "@/src/utils/constants";
+import { useState } from "react";
 
-type LocationShape = { lat: number; lng: number };
-type LocationType = "hostel" | "campus";
-
-const HOSTEL_OPTIONS = [
-  { label: "Dhaludhar", value: "dhaludhar" },
-  { label: "Yamuna", value: "yamuna" },
-  { label: "Shivalik", value: "shivalik" },
-];
-
-export default function CreateComplaint() {
+export default function RaiseComplaint() {
   const router = useRouter();
-  const [locationType, setLocationType] = useState<LocationType>("campus");
+  const [locationType, setLocationType] = useState<"campus" | "hostel">("campus");
   const [description, setDescription] = useState("");
-  const [issueType, setIssueType] = useState<string | null>(null);
-  const [hostelName, setHostelName] = useState<string | null>(null);
-  const [roomNumber, setRoomNumber] = useState("");
-  const [building, setBuilding] = useState("");
-  const [block, setBlock] = useState("");
-  const [location, setLocation] = useState<LocationShape>({ lat: 28.5468, lng: 77.2741 });
   const [submitting, setSubmitting] = useState(false);
-  const [showHostelDropdown, setShowHostelDropdown] = useState(false);
 
-  const handleSubmit = async () => {
-    if (!description.trim() || !issueType) {
-      Alert.alert("Missing fields", "Please choose an issue type and enter a description.");
-      return;
-    }
-
-    if (locationType === "hostel" && !hostelName) {
-      Alert.alert("Missing fields", "Please select a hostel name.");
-      return;
-    }
-
-    if (locationType === "hostel" && !roomNumber.trim()) {
-      Alert.alert("Missing fields", "Please enter your room number.");
-      return;
-    }
-
-    if (locationType === "campus" && !building.trim()) {
-      Alert.alert("Missing fields", "Please enter building/location name.");
-      return;
-    }
-
-    setSubmitting(true);
-
-    try {
-      const payload = {
-        issueType,
-        description,
-        location: location || { lat: 0, lng: 0 },
-        locationType,
-        ...(locationType === "hostel" && {
-          hostelName,
-          roomNumber,
-        }),
-        ...(locationType === "campus" && {
-          building,
-          block,
-        }),
-        images: [],
-      };
-
-      await createComplaint(payload);
-
-      Alert.alert("Complaint Submitted", "Your grievance has been recorded.", [
-        { text: "OK", onPress: () => router.push("/my-complaints") },
-      ]);
-    } catch (error) {
-      console.log("Submit complaint error:", error);
-      Alert.alert("Submission failed", "Unable to submit your complaint right now.");
-    } finally {
-      setSubmitting(false);
-    }
+  const handleSubmit = () => {
+    // Handle form submission
+    console.log("Submitting complaint");
   };
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+
+      {/* Header */}
       <LinearGradient
         colors={["#1e3a8a", "#3b82f6"]}
         style={styles.header}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
       >
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Raise Grievance</Text>
+        <Text style={styles.headerTitle}>Raise Complaint</Text>
         <View style={styles.headerPlaceholder} />
       </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Location Type Toggle */}
-        <View style={styles.section}>
-          <Text style={styles.label}>Location Type</Text>
-          <View style={styles.toggleContainer}>
-            <TouchableOpacity
-              style={[
-                styles.toggleButton,
-                locationType === "campus" && styles.toggleButtonActive,
-              ]}
-              onPress={() => setLocationType("campus")}
-              activeOpacity={0.8}
-            >
-              <Ionicons
-                name="school-outline"
-                size={18}
-                color={locationType === "campus" ? "#fff" : "#2563eb"}
-              />
-              <Text
-                style={[
-                  styles.toggleButtonText,
-                  locationType === "campus" && styles.toggleButtonTextActive,
-                ]}
-              >
-                Campus
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.toggleButton,
-                locationType === "hostel" && styles.toggleButtonActive,
-              ]}
-              onPress={() => setLocationType("hostel")}
-              activeOpacity={0.8}
-            >
-              <Ionicons
-                name="home-outline"
-                size={18}
-                color={locationType === "hostel" ? "#fff" : "#2563eb"}
-              />
-              <Text
-                style={[
-                  styles.toggleButtonText,
-                  locationType === "hostel" && styles.toggleButtonTextActive,
-                ]}
-              >
-                Hostel
-              </Text>
-            </TouchableOpacity>
-          </View>
+        {/* Info Banner */}
+        <View style={styles.infoBanner}>
+          <Ionicons name="information-circle" size={20} color="#2563eb" />
+          <Text style={styles.infoText}>Select the type of issue you want to report</Text>
         </View>
 
-        {/* Hostel-Specific Fields */}
-        {locationType === "hostel" && (
-          <>
-            <View style={styles.section}>
-              <Text style={styles.label}>Hostel Name *</Text>
-              <TouchableOpacity
-                style={styles.dropdownButton}
-                onPress={() => setShowHostelDropdown(!showHostelDropdown)}
-                activeOpacity={0.8}
-              >
-                <Text
-                  style={[
-                    styles.dropdownButtonText,
-                    !hostelName && styles.dropdownPlaceholder,
-                  ]}
-                >
-                  {hostelName
-                    ? HOSTEL_OPTIONS.find((h) => h.value === hostelName)?.label
-                    : "Select hostel..."}
-                </Text>
-                <Ionicons
-                  name={showHostelDropdown ? "chevron-up" : "chevron-down"}
-                  size={20}
-                  color="#2563eb"
-                />
-              </TouchableOpacity>
-              {showHostelDropdown && (
-                <View style={styles.dropdownMenu}>
-                  {HOSTEL_OPTIONS.map((option) => (
-                    <TouchableOpacity
-                      key={option.value}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        setHostelName(option.value);
-                        setShowHostelDropdown(false);
-                      }}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={styles.dropdownItemText}>{option.label}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.label}>Room Number *</Text>
-              <TextInput
-                value={roomNumber}
-                onChangeText={setRoomNumber}
-                placeholder="E.g., 205A"
-                style={styles.input}
-                placeholderTextColor="#cbd5e1"
-              />
-            </View>
-          </>
-        )}
-
-        {/* Campus-Specific Fields */}
-        {locationType === "campus" && (
-          <>
-            <View style={styles.section}>
-              <Text style={styles.label}>Building/Location *</Text>
-              <TextInput
-                value={building}
-                onChangeText={setBuilding}
-                placeholder="E.g., Main Administrative Building"
-                style={styles.input}
-                placeholderTextColor="#cbd5e1"
-              />
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.label}>Block/Wing (Optional)</Text>
-              <TextInput
-                value={block}
-                onChangeText={setBlock}
-                placeholder="E.g., Block A"
-                style={styles.input}
-                placeholderTextColor="#cbd5e1"
-              />
-            </View>
-          </>
-        )}
-
-        {/* Issue Type */}
-        <View style={styles.section}>
-          <Text style={styles.label}>Grievance Type *</Text>
-          <View style={styles.typeList}>
-            {ISSUE_TYPES.map((type) => (
-              <TouchableOpacity
-                key={type.value}
-                style={[
-                  styles.typeButton,
-                  issueType === type.value && styles.typeButtonActive,
-                ]}
-                onPress={() => setIssueType(type.value)}
-                activeOpacity={0.8}
-              >
-                <Text
-                  style={
-                    issueType === type.value
-                      ? styles.typeButtonTextActive
-                      : styles.typeButtonText
-                  }
-                >
-                  {type.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Description */}
-        <View style={styles.section}>
-          <Text style={styles.label}>Description *</Text>
-          <TextInput
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Describe the issue in detail..."
-            multiline
-            numberOfLines={5}
-            style={styles.textArea}
-            placeholderTextColor="#cbd5e1"
-          />
-          <Text style={styles.charCount}>{description.length} characters</Text>
-        </View>
-
-        {/* Submit Button */}
+        {/* Hostel Complaint Card */}
         <TouchableOpacity
-          style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
-          onPress={handleSubmit}
-          disabled={submitting}
+          style={styles.typeCard}
+          onPress={() => router.push({ pathname: "/create-complaint-hostel" })}
           activeOpacity={0.85}
         >
-          <Text style={styles.submitButtonText}>
-            {submitting ? "Submitting..." : "Submit Grievance"}
-          </Text>
+          <LinearGradient
+            colors={["#3b82f6", "#2563eb"]}
+            style={styles.cardGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <View style={styles.cardHeader}>
+              <View style={styles.iconContainer}>
+                <Ionicons name="home" size={40} color="#fff" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.cardTitle}>Hostel Complaint</Text>
+                <Text style={styles.cardSubtitle}>Report issues in your hostel room or common areas</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color="rgba(255,255,255,0.7)" />
+            </View>
+
+            <View style={styles.cardDivider} />
+
+            <View style={styles.featureList}>
+              <View style={styles.feature}>
+                <Ionicons name="checkmark-circle" size={16} color="rgba(255,255,255,0.8)" />
+                <Text style={styles.featureText}>AC Issues</Text>
+              </View>
+              <View style={styles.feature}>
+                <Ionicons name="checkmark-circle" size={16} color="rgba(255,255,255,0.8)" />
+                <Text style={styles.featureText}>Plumbing Problems</Text>
+              </View>
+              <View style={styles.feature}>
+                <Ionicons name="checkmark-circle" size={16} color="rgba(255,255,255,0.8)" />
+                <Text style={styles.featureText}>Electrical Faults</Text>
+              </View>
+              <View style={styles.feature}>
+                <Ionicons name="checkmark-circle" size={16} color="rgba(255,255,255,0.8)" />
+                <Text style={styles.featureText}>WiFi & Connectivity</Text>
+              </View>
+            </View>
+          </LinearGradient>
         </TouchableOpacity>
 
-        <View style={styles.spacer} />
+        {/* Campus Complaint Card */}
+        <TouchableOpacity
+          style={styles.typeCard}
+          onPress={() => router.push({ pathname: "/create-complaint-campus" })}
+          activeOpacity={0.85}
+        >
+          <LinearGradient
+            colors={["#10b981", "#059669"]}
+            style={styles.cardGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <View style={styles.cardHeader}>
+              <View style={styles.iconContainer}>
+                <Ionicons name="school" size={40} color="#fff" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.cardTitle}>Campus Complaint</Text>
+                <Text style={styles.cardSubtitle}>Report issues around campus grounds</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color="rgba(255,255,255,0.7)" />
+            </View>
+
+            <View style={styles.cardDivider} />
+
+            <View style={styles.featureList}>
+              <View style={styles.feature}>
+                <Ionicons name="checkmark-circle" size={16} color="rgba(255,255,255,0.8)" />
+                <Text style={styles.featureText}>Sanitation Issues</Text>
+              </View>
+              <View style={styles.feature}>
+                <Ionicons name="checkmark-circle" size={16} color="rgba(255,255,255,0.8)" />
+                <Text style={styles.featureText}>Construction Hazards</Text>
+              </View>
+              <View style={styles.feature}>
+                <Ionicons name="checkmark-circle" size={16} color="rgba(255,255,255,0.8)" />
+                <Text style={styles.featureText}>Maintenance Issues</Text>
+              </View>
+              <View style={styles.feature}>
+                <Ionicons name="checkmark-circle" size={16} color="rgba(255,255,255,0.8)" />
+                <Text style={styles.featureText}>General Safety</Text>
+              </View>
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
@@ -521,6 +355,76 @@ const styles = StyleSheet.create({
   },
   spacer: {
     height: 20,
+  },
+  infoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eff6ff',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#2563eb',
+    fontWeight: '500',
+    marginLeft: 8,
+  },
+  typeCard: {
+    marginBottom: 20,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
+  },
+  cardGradient: {
+    padding: 18,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconContainer: {
+    width: 54,
+    height: 54,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  cardTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  cardSubtitle: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  cardDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    marginVertical: 16,
+  },
+  featureList: {
+    marginTop: 4,
+  },
+  feature: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  featureText: {
+    marginLeft: 10,
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 

@@ -80,7 +80,7 @@ useEffect(() => {
           
           <TouchableOpacity
             style={styles.primaryCard}
-            onPress={() => navigation.navigate("CreateComplaint")}
+            onPress={() => navigation.navigate("RaiseComplaint")}
             activeOpacity={0.8}
           >
             <LinearGradient
