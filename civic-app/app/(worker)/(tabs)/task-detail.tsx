@@ -5,6 +5,8 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  Modal,
+  Alert,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState, useEffect } from "react";
@@ -29,12 +31,16 @@ export default function TaskDetail() {
   const [note, setNote] = useState("");
   const [image, setImage] = useState<string | null>(null);
 
+  // Modal state
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalType, setModalType] = useState<"completed" | "incomplete" | null>(null);
+  const [modalNote, setModalNote] = useState("");
+
   const loadTask = async () => {
     const allTasks = [
       ...(await getAllTasks()),
       ...(await getMyTasks()),
     ];
-
     const updated = allTasks.find((t) => t.id === parsedTask.id);
     if (updated) setCurrentTask(updated);
   };
@@ -43,30 +49,49 @@ export default function TaskDetail() {
     loadTask();
   }, []);
 
-  /* ---------------- IMAGE ---------------- */
-
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      quality: 0.7,
-    });
-
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
-    }
+    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7 });
+    if (!result.canceled) setImage(result.assets[0].uri);
   };
 
   const openCamera = async () => {
-    const result = await ImagePicker.launchCameraAsync({
-      quality: 0.7,
-    });
-
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
-    }
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.7 });
+    if (!result.canceled) setImage(result.assets[0].uri);
   };
+
+  const openModal = (type: "completed" | "incomplete") => {
+    setModalType(type);
+    setModalNote("");
+    setModalVisible(true);
+  };
+
+const handleConfirm = async () => {
+  if (!modalType) return;
+
+  // 👇 image is mandatory
+  if (!image) {
+    Alert.alert(
+      "Photo Required",
+      "Please upload a photo of the work before marking as complete or incomplete.",
+      [{ text: "OK" }]
+    );
+    setModalVisible(false);
+    return;
+  }
+
+  await completeTask(currentTask.id, modalType, modalNote, image);
+  setModalVisible(false);
+  router.back();
+};
 
   return (
     <ScrollView style={styles.container}>
+
+      {/* BACK BUTTON */}
+      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <Text style={styles.backText}>← Back</Text>
+      </TouchableOpacity>
+
       {/* HEADER */}
       <View style={styles.header}>
         <Text style={styles.title}>{currentTask.issueType}</Text>
@@ -79,22 +104,18 @@ export default function TaskDetail() {
           <>
             <Text style={styles.label}>📍 Location</Text>
             <Text style={styles.value}>{currentTask.landmark}</Text>
-
             <Text style={styles.value}>{currentTask.address}</Text>
           </>
         ) : (
           <>
             <Text style={styles.label}>🏢 Hostel</Text>
             <Text style={styles.value}>{currentTask.hostelName}</Text>
-
             <Text style={styles.value}>
               Floor {currentTask.floor} | Room {currentTask.room}
             </Text>
           </>
         )}
-
         <Text style={styles.time}>🕒 {currentTask.reportedAt}</Text>
-
         <Text style={styles.label}>Description</Text>
         <Text style={styles.description}>
           {currentTask.description || "No description provided"}
@@ -110,30 +131,27 @@ export default function TaskDetail() {
             router.back();
           }}
         >
-          <Text style={styles.primaryText}>Start Task</Text>
+          <Text style={styles.primaryText}>▶ Start Task</Text>
         </TouchableOpacity>
       )}
 
       {/* IN PROGRESS */}
       {currentTask.status === "in-progress" && (
         <View style={styles.section}>
-          {/* IMAGE ACTIONS */}
+
+          <Text style={styles.sectionTitle}>Upload Proof of Work</Text>
+
           <View style={styles.row}>
             <TouchableOpacity style={styles.secondaryBtn} onPress={pickImage}>
-              <Text>Gallery</Text>
+              <Text style={styles.secondaryBtnText}>🖼 Gallery</Text>
             </TouchableOpacity>
-
             <TouchableOpacity style={styles.secondaryBtn} onPress={openCamera}>
-              <Text>Camera</Text>
+              <Text style={styles.secondaryBtnText}>📷 Camera</Text>
             </TouchableOpacity>
           </View>
 
-          {/* IMAGE PREVIEW */}
-          {image && (
-            <ImagePreview uri={image} size={180} />
-          )}
+          {image && <ImagePreview uri={image} size={180} />}
 
-          {/* NOTE */}
           <TextInput
             placeholder="Add remarks..."
             value={note}
@@ -142,33 +160,71 @@ export default function TaskDetail() {
             multiline
           />
 
-          {/* ACTIONS */}
           <TouchableOpacity
             style={styles.successBtn}
-            onPress={async () => {
-              await completeTask(currentTask.id, "completed", note, image || "");
-              router.back();
-            }}
+            onPress={() => openModal("completed")}
           >
-            <Text style={styles.btnText}>Mark Completed</Text>
+            <Text style={styles.btnText}>✅ Mark Completed</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.dangerBtn}
-            onPress={async () => {
-              await completeTask(currentTask.id, "incomplete", note, image || "");
-              router.back();
-            }}
+            onPress={() => openModal("incomplete")}
           >
-            <Text style={styles.btnText}>Mark Incomplete</Text>
+            <Text style={styles.btnText}>❌ Mark Incomplete</Text>
           </TouchableOpacity>
         </View>
       )}
+
+      {/* CONFIRMATION MODAL */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>
+              {modalType === "completed" ? "✅ Mark as Completed" : "❌ Mark as Incomplete"}
+            </Text>
+
+            <Text style={styles.modalSubtitle}>
+              {modalType === "completed"
+                ? "Please describe what was done."
+                : "Please explain why the task is incomplete."}
+            </Text>
+
+            <TextInput
+              placeholder="Write your reason..."
+              value={modalNote}
+              onChangeText={setModalNote}
+              style={styles.modalInput}
+              multiline
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={modalType === "completed" ? styles.confirmSuccessBtn : styles.confirmDangerBtn}
+                onPress={handleConfirm}
+              >
+                <Text style={styles.btnText}>Confirm</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </ScrollView>
   );
 }
-
-/* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({
   container: {
@@ -176,18 +232,24 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8fafc",
     padding: 16,
   },
-
+  backBtn: {
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  backText: {
+    fontSize: 14,
+    color: "#2563eb",
+    fontWeight: "600",
+  },
   header: {
     marginBottom: 16,
   },
-
   title: {
     fontSize: 22,
     fontWeight: "800",
     color: "#0f172a",
     marginBottom: 6,
   },
-
   card: {
     backgroundColor: "#fff",
     padding: 16,
@@ -198,31 +260,26 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 2,
   },
-
   label: {
     fontSize: 13,
     color: "#64748b",
     marginTop: 10,
   },
-
   value: {
     fontSize: 14,
     color: "#0f172a",
     fontWeight: "600",
   },
-
   description: {
     marginTop: 6,
     fontSize: 14,
     color: "#334155",
   },
-
   time: {
     marginTop: 10,
     fontSize: 12,
     color: "#94a3b8",
   },
-
   primaryButton: {
     backgroundColor: "#2563eb",
     padding: 14,
@@ -230,21 +287,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 20,
   },
-
   primaryText: {
     color: "#fff",
     fontWeight: "600",
   },
-
   section: {
     gap: 12,
   },
-
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#0f172a",
+  },
   row: {
     flexDirection: "row",
     gap: 10,
   },
-
   secondaryBtn: {
     flex: 1,
     padding: 10,
@@ -252,31 +310,94 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
   },
-
+  secondaryBtnText: {
+    fontWeight: "600",
+    color: "#334155",
+  },
   input: {
     borderWidth: 1,
     borderColor: "#e2e8f0",
     padding: 12,
     borderRadius: 12,
     minHeight: 80,
+    backgroundColor: "#fff",
   },
-
   successBtn: {
     backgroundColor: "#16a34a",
     padding: 14,
     borderRadius: 12,
     alignItems: "center",
   },
-
   dangerBtn: {
     backgroundColor: "#dc2626",
     padding: 14,
     borderRadius: 12,
     alignItems: "center",
+    marginBottom: 30,
   },
-
   btnText: {
     color: "#fff",
     fontWeight: "600",
+  },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "flex-end",
+  },
+  modalCard: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    gap: 12,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#0f172a",
+  },
+  modalSubtitle: {
+    fontSize: 13,
+    color: "#64748b",
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 12,
+    borderRadius: 12,
+    minHeight: 100,
+    backgroundColor: "#f8fafc",
+  },
+  modalActions: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 4,
+  },
+  cancelBtn: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    backgroundColor: "#f1f5f9",
+  },
+  cancelText: {
+    color: "#64748b",
+    fontWeight: "600",
+  },
+  confirmSuccessBtn: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    backgroundColor: "#16a34a",
+  },
+  confirmDangerBtn: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    backgroundColor: "#dc2626",
   },
 });

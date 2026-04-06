@@ -5,7 +5,7 @@ export default function ModalScreen() {
   return (
     <View style={styles.container}>
       <Text>This is a modal</Text>
-      <Link href="/(tabs)/dashboard">Go to Dashboard</Link>
+      <Link href="/(worker)/(tabs)/dashboard">Go to Dashboard</Link>
     </View>
   );
 }

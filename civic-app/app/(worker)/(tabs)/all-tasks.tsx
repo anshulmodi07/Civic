@@ -36,28 +36,28 @@ export default function AllTasks() {
   };
 
   /* ---------------- RENDER ITEM ---------------- */
-  const renderItem = ({ item }: { item: Task }) => (
-    <View style={styles.cardWrapper}>
-      <TaskCard
-        task={item}
-        onPress={() =>
-          router.push(
-            `/task-detail?task=${encodeURIComponent(JSON.stringify(item))}`
-          )
-        }
-      />
+ const renderItem = ({ item }: { item: Task }) => (
+  <View style={styles.cardWrapper}>
+    <TaskCard
+      task={item}
+      onPress={() =>
+        router.push({
+          pathname: "/(worker)/task-detail",
+          params: { task: JSON.stringify(item) },
+        } as any)
+      }
+    />
 
-      {/* ACCEPT BUTTON */}
-      {item.status === "pending" && (
-        <TouchableOpacity
-          style={styles.acceptButton}
-          onPress={() => handleAccept(item.id)}
-        >
-          <Text style={styles.acceptButtonText}>Accept Task</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
+    {item.status === "pending" && (
+      <TouchableOpacity
+        style={styles.acceptButton}
+        onPress={() => handleAccept(item.id)}
+      >
+        <Text style={styles.acceptButtonText}>Accept Task</Text>
+      </TouchableOpacity>
+    )}
+  </View>
+);
 
   return (
     <View style={styles.container}>
