@@ -53,7 +53,7 @@ export const getAllTasks = async (): Promise<Task[]> => {
 // Tasks accepted or in progress (worker's tasks)
 export const getMyTasks = async (): Promise<Task[]> => {
   return TASK_STORE.getAll().filter(
-    (t) => t.status === "accepted" || t.status === "in-progress"
+    (t) => t.status !== "pending"
   );
 };
 
