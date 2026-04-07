@@ -10,16 +10,18 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { getMyComplaints } from "@/src/api/complaint.api";
+import { getMyComplaints, toggleUpvote } from "@/src/api/complaint.api";
 import { checkSLA } from "@/src/utils/sla";
 
-type FilterValue = "all" | "pending" | "in-progress" | "closed";
+type FilterValue = "all" | "pending" | "in_progress" | "resolved";
 
 type Complaint = {
   _id: string;
+  type: "hostel" | "campus";
   issueType: string;
   description: string;
   status: string;
+  upvotes: number;
   createdAt: string;
   images?: any[];
 };
@@ -29,6 +31,7 @@ export default function MyComplaints() {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<FilterValue>("all");
+  const [upvotingIds, setUpvotingIds] = useState<string[]>([]);
 
   useEffect(() => {
     const loadComplaints = async () => {
@@ -50,13 +53,47 @@ export default function MyComplaints() {
     return complaints.filter((item) => item.status === filterStatus);
   };
 
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      pending: "#f97316",
+      in_progress: "#3b82f6",
+      resolved: "#22c55e",
+    };
+    return colors[status] || "#64748b";
+  };
+
+  const getStatusBgColor = (status: string) => {
+    const colors: Record<string, string> = {
+      pending: "#fed7aa",
+      in_progress: "#bfdbfe",
+      resolved: "#bbf7d0",
+    };
+    return colors[status] || "#f1f5f9";
+  };
+
   const counts = {
     all: complaints.length,
     pending: complaints.filter((item) => item.status === "pending").length,
-    "in-progress": complaints.filter(
-      (item) => item.status === "in-progress" || item.status === "assigned"
-    ).length,
-    closed: complaints.filter((item) => item.status === "closed").length,
+    in_progress: complaints.filter((item) => item.status === "in_progress").length,
+    resolved: complaints.filter((item) => item.status === "resolved").length,
+  };
+
+  const handleToggleSupport = async (complaintId: string) => {
+    if (upvotingIds.includes(complaintId)) return;
+    setUpvotingIds((prev) => [...prev, complaintId]);
+
+    try {
+      const response = await toggleUpvote(complaintId);
+      setComplaints((prev) =>
+        prev.map((item) =>
+          item._id === complaintId ? { ...item, upvotes: response.upvotes } : item
+        )
+      );
+    } catch (error) {
+      console.log("Support action failed:", error);
+    } finally {
+      setUpvotingIds((prev) => prev.filter((id) => id !== complaintId));
+    }
   };
 
   const renderComplaint = ({ item }: { item: Complaint }) => {
@@ -89,15 +126,47 @@ export default function MyComplaints() {
           {item.description}
         </Text>
         <View style={styles.footerRow}>
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>{item.status.toUpperCase()}</Text>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusBgColor(item.status) }]}>
+            <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
+              {item.status.replace("_", " ").toUpperCase()}
+            </Text>
+          </View>
+          <View style={styles.typeBadge}>
+            <Ionicons
+              name={item.type === "hostel" ? "home" : "location"}
+              size={12}
+              color="#2563eb"
+            />
+            <Text style={styles.typeText}>{item.type === "hostel" ? "Hostel" : "Campus"}</Text>
           </View>
           {sla.breached && (
             <View style={styles.slaBadge}>
               <Ionicons name="alert-circle" size={14} color="#dc2626" />
-              <Text style={styles.slaText}>SLA Breach</Text>
+              <Text style={styles.slaText}>SLA</Text>
             </View>
           )}
+          <TouchableOpacity
+            style={[styles.supportButton, upvotingIds.includes(item._id) && styles.supportButtonActive]}
+            activeOpacity={0.8}
+            onPress={(event) => {
+              event.stopPropagation?.();
+              handleToggleSupport(item._id);
+            }}
+          >
+            <Ionicons
+              name="thumbs-up"
+              size={14}
+              color={upvotingIds.includes(item._id) ? "#fff" : "#06b6d4"}
+            />
+            <Text
+              style={[
+                styles.supportText,
+                upvotingIds.includes(item._id) && styles.supportTextActive,
+              ]}
+            >
+              {item.upvotes || 0}
+            </Text>
+          </TouchableOpacity>
         </View>
       </TouchableOpacity>
     );
@@ -124,8 +193,8 @@ export default function MyComplaints() {
         {[
           { label: "All", value: "all", count: counts.all },
           { label: "Pending", value: "pending", count: counts.pending },
-          { label: "Active", value: "in-progress", count: counts["in-progress"] },
-          { label: "Resolved", value: "closed", count: counts.closed },
+          { label: "Active", value: "in_progress", count: counts.in_progress },
+          { label: "Resolved", value: "resolved", count: counts.resolved },
         ].map((item) => (
           <TouchableOpacity
             key={item.value}
@@ -271,6 +340,40 @@ const styles = StyleSheet.create({
     color: "#334155",
     fontWeight: "700",
     fontSize: 12,
+  },
+  typeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: "#eff6ff",
+    gap: 4,
+  },
+  typeText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#2563eb",
+  },
+  supportButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "#eff6ff",
+  },
+  supportButtonActive: {
+    backgroundColor: "#2563eb",
+  },
+  supportText: {
+    marginLeft: 8,
+    color: "#06b6d4",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  supportTextActive: {
+    color: "#fff",
   },
   slaBadge: {
     flexDirection: "row",
