@@ -7,43 +7,44 @@ import { AuthContext, AuthProvider } from "@/src/context/AuthContext";
 function RootLayoutInner() {
   const { user, loading } = useContext(AuthContext);
   const router = useRouter();
-  const segments = useSegments();
-
+    const segments = useSegments() as string[];
+  
   useEffect(() => {
     if (loading) return;
 
-    const inAuthGroup = segments[0] === "(auth)";
-    const inWorkerGroup = segments[0] === "(worker)";
-    const inClientGroup = segments[0] === "(client)";
 
-    // ❌ Not logged in → go to login
-    if (!user && !inAuthGroup) {
-      router.replace("/login");
-      return;
-    }
 
-    // ❌ Logged in user trying to access auth pages → redirect out
-    if (user && inAuthGroup) {
-      if (user.role === "worker") {
-        router.replace("/(worker)/(tabs)/dashboard");  // ✅ full path
-      } else {
-        router.replace("/(client)/browse");  // adjust for client
-      }
-      return;
-    }
+const inAuthGroup = segments.includes("(auth)");
+const inWorkerGroup = segments.includes("(worker)");
+const inClientGroup = segments.includes("(client)");
 
-    // ✅ Worker trying to access non-worker area → redirect
-    // ⚠️ Do NOT redirect if already anywhere inside (worker)
-    if (user?.role === "worker" && !inWorkerGroup) {
-      router.replace("/(worker)/(tabs)/dashboard");  // ✅ full path
-      return;
-    }
+// Not logged in
+if (!user && !inAuthGroup) {
+  router.replace("/(auth)/login");
+  return;
+}
 
-    // ✅ Client trying to access non-client area → redirect
-    if (user?.role === "client" && !inClientGroup) {
-      router.replace("/(client)/browse");  // adjust as needed
-      return;
-    }
+// Logged in → block auth pages
+if (user && inAuthGroup) {
+  if (user.role === "worker") {
+    router.replace("/(worker)/(tabs)/dashboard");
+  } else {
+    router.replace("/(client)");
+  }
+  return;
+}
+
+// Worker protection
+if (user?.role === "worker" && !inWorkerGroup && !inAuthGroup) {
+  router.replace("/(worker)/(tabs)/dashboard");
+  return;
+}
+
+// Client protection
+if (user?.role === "client" && !inClientGroup && !inAuthGroup) {
+  router.replace("/(client)/browse");
+  return;
+}
 
   }, [user, loading, segments]);
 
