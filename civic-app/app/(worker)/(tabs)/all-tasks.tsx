@@ -5,73 +5,98 @@ import {
   Text,
   TouchableOpacity,
 } from "react-native";
-import { useEffect, useState } from "react";
+import { useCallback, useContext, useState } from "react";
+import { useRouter, useFocusEffect } from "expo-router";
+
 import { getAllTasks, acceptTask } from "@/src/api/tasks.api";
 import TaskCard from "@/src/components/TaskCard";
-import { useRouter } from "expo-router";
 import { Task } from "@/src/types/task";
+import { AuthContext } from "@/src/context/AuthContext";
 
 export default function AllTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const router = useRouter();
+  const { user } = useContext(AuthContext);
 
-  useEffect(() => {
-    loadTasks();
-  }, []);
+  /* ---------------- LOAD TASKS ---------------- */
 
   const loadTasks = async () => {
-    const data = await getAllTasks();
-    setTasks(data);
+    try {
+      const data = await getAllTasks();
+
+      // 🔥 Department-based filtering
+      const filtered = data.filter(
+        (t) => t.issueType === user?.department
+      );
+
+      setTasks(filtered);
+    } catch (error) {
+      console.log("Error loading tasks:", error);
+    }
   };
+
+  /* ---------------- REFRESH ON SCREEN FOCUS ---------------- */
+
+  useFocusEffect(
+    useCallback(() => {
+      loadTasks();
+    }, [user])
+  );
+
+  /* ---------------- HANDLE ACCEPT ---------------- */
 
   const handleAccept = async (id: string) => {
     await acceptTask(id);
-    loadTasks();
+    await loadTasks(); // 🔥 refresh immediately
   };
 
   /* ---------------- STATS ---------------- */
+
   const stats = {
-    total: tasks.length,
+    available: tasks.length,
     pending: tasks.filter((t) => t.status === "pending").length,
   };
 
   /* ---------------- RENDER ITEM ---------------- */
- const renderItem = ({ item }: { item: Task }) => (
-  <View style={styles.cardWrapper}>
-    <TaskCard
-      task={item}
-      onPress={() =>
-        router.push({
-          pathname: "/(worker)/task-detail",
-          params: { task: JSON.stringify(item) },
-        } as any)
-      }
-    />
 
-    {item.status === "pending" && (
-      <TouchableOpacity
-        style={styles.acceptButton}
-        onPress={() => handleAccept(item.id)}
-      >
-        <Text style={styles.acceptButtonText}>Accept Task</Text>
-      </TouchableOpacity>
-    )}
-  </View>
-);
+  const renderItem = ({ item }: { item: Task }) => (
+    <View style={styles.cardWrapper}>
+      <TaskCard
+        task={item}
+        onPress={() =>
+          router.push({
+            pathname: "/(worker)/task-detail",
+            params: { task: JSON.stringify(item) },
+          } as any)
+        }
+      />
+
+      {item.status === "pending" && (
+        <TouchableOpacity
+          style={styles.acceptButton}
+          onPress={() => handleAccept(item.id)}
+        >
+          <Text style={styles.acceptButtonText}>Accept Task</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
 
   return (
     <View style={styles.container}>
       {/* HEADER */}
       <View style={styles.header}>
         <Text style={styles.heading}>All Tasks</Text>
-        <Text style={styles.subHeading}>Available tasks to pick</Text>
+        <Text style={styles.subHeading}>
+          Tasks available for your department
+        </Text>
       </View>
 
       {/* STATS */}
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{stats.total}</Text>
-          <Text style={styles.statLabel}>Total</Text>
+          <Text style={styles.statNumber}>{stats.available}</Text>
+          <Text style={styles.statLabel}>Available</Text>
         </View>
 
         <View style={styles.statCard}>
@@ -89,7 +114,9 @@ export default function AllTasks() {
         contentContainerStyle={{ paddingBottom: 30 }}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No tasks available 🚀</Text>
+            <Text style={styles.emptyText}>
+              No tasks for your department 🚀
+            </Text>
           </View>
         }
       />

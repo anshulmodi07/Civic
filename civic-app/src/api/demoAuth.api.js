@@ -9,6 +9,7 @@ const demoUsers = [
     name: "Demo Worker",
     email: "worker@demo.com",
     role: "worker",
+    department: "electrician",
     password: DEMO_PASSWORD,
   },
   {
@@ -71,6 +72,7 @@ export const login = async ({ email, name, role, password }) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      department: user.department || null,
     },
   };
 };
@@ -98,6 +100,7 @@ export const getMe = async () => {
     name: user.name,
     email: user.email,
     role: user.role,
+    department: user.department || null,
   };
 };
 

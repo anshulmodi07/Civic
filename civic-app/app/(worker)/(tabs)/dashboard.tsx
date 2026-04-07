@@ -5,38 +5,65 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { useEffect, useState } from "react";
+import { useState, useCallback, useContext } from "react";
+import { useRouter, useFocusEffect } from "expo-router";
+
 import { getMyTasks, getAllTasks } from "@/src/api/tasks.api";
 import { Task } from "@/src/types/task";
-import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { AuthContext } from "@/src/context/AuthContext";
 
 export default function Dashboard() {
   const [myTasks, setMyTasks] = useState<Task[]>([]);
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const router = useRouter();
+  const { user } = useContext(AuthContext);
 
-  useEffect(() => {
-    loadTasks();
-  }, []);
+  /* ---------------- LOAD TASKS ---------------- */
 
   const loadTasks = async () => {
-    const [my, all] = await Promise.all([getMyTasks(), getAllTasks()]);
-    setMyTasks(my);
-    setAllTasks(all);
+    try {
+      const [my, all] = await Promise.all([
+        getMyTasks(),
+        getAllTasks(),
+      ]);
+
+      // 🔥 filter by department
+      const filteredAll = all.filter(
+        (t) => t.issueType === user?.department
+      );
+
+      const filteredMy = my.filter(
+        (t) => t.issueType === user?.department
+      );
+
+      setMyTasks(filteredMy);
+      setAllTasks(filteredAll);
+    } catch (error) {
+      console.log("Dashboard load error:", error);
+    }
   };
+
+  /* ---------------- REFRESH ON FOCUS ---------------- */
+
+  useFocusEffect(
+    useCallback(() => {
+      loadTasks();
+    }, [user])
+  );
+
+  /* ---------------- STATS ---------------- */
 
   const stats = {
     active: myTasks.filter((t) => t.status === "in-progress").length,
     completed: myTasks.filter((t) => t.status === "completed").length,
-    total: myTasks.length,
-    pending: allTasks.filter((t) => t.status === "pending").length,
+    total: myTasks.length, // accepted + in-progress
+    pending: allTasks.length, // available tasks
     incomplete: myTasks.filter((t) => t.status === "incomplete").length,
   };
 
   return (
     <ScrollView style={styles.container}>
-
       {/* HEADER */}
       <View style={styles.header}>
         <View>
@@ -45,35 +72,45 @@ export default function Dashboard() {
         </View>
         <TouchableOpacity
           style={styles.profileBtn}
-          onPress={() => router.push("/(worker)/(tabs)/profile" as any)}
+          onPress={() =>
+            router.push("/(worker)/(tabs)/profile" as any)
+          }
         >
-          <Ionicons name="person-circle-outline" size={38} color="#2563eb" />
+          <Ionicons
+            name="person-circle-outline"
+            size={38}
+            color="#2563eb"
+          />
         </TouchableOpacity>
       </View>
 
-      {/* STATS ROW */}
+      {/* STATS */}
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
           <Text style={styles.statNumber}>{stats.active}</Text>
           <Text style={styles.statLabel}>Active</Text>
         </View>
+
         <View style={styles.statCard}>
           <Text style={styles.statNumber}>{stats.completed}</Text>
           <Text style={styles.statLabel}>Completed</Text>
         </View>
+
         <View style={styles.statCard}>
           <Text style={styles.statNumber}>{stats.total}</Text>
           <Text style={styles.statLabel}>Total</Text>
         </View>
       </View>
 
-      {/* NAV CARDS */}
+      {/* QUICK ACTIONS */}
       <Text style={styles.sectionTitle}>Quick Actions</Text>
 
       {/* ALL TASKS */}
       <TouchableOpacity
         style={styles.navCard}
-        onPress={() => router.push("/(worker)/(tabs)/all-tasks" as any)}
+        onPress={() =>
+          router.push("/(worker)/(tabs)/all-tasks" as any)
+        }
       >
         <View style={styles.navCardLeft}>
           <View style={[styles.iconBox, { backgroundColor: "#dbeafe" }]}>
@@ -81,23 +118,34 @@ export default function Dashboard() {
           </View>
           <View>
             <Text style={styles.navCardTitle}>All Tasks</Text>
-            <Text style={styles.navCardSub}>Browse and accept work</Text>
+            <Text style={styles.navCardSub}>
+              Tasks available for you
+            </Text>
           </View>
         </View>
+
         <View style={styles.badgeRow}>
           {stats.pending > 0 && (
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>{stats.pending} pending</Text>
+              <Text style={styles.badgeText}>
+                {stats.pending} pending
+              </Text>
             </View>
           )}
-          <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+          <Ionicons
+            name="chevron-forward"
+            size={18}
+            color="#94a3b8"
+          />
         </View>
       </TouchableOpacity>
 
       {/* MY TASKS */}
       <TouchableOpacity
         style={styles.navCard}
-        onPress={() => router.push("/(worker)/(tabs)/my-tasks" as any)}
+        onPress={() =>
+          router.push("/(worker)/(tabs)/my-tasks" as any)
+        }
       >
         <View style={styles.navCardLeft}>
           <View style={[styles.iconBox, { backgroundColor: "#d1fae5" }]}>
@@ -105,9 +153,12 @@ export default function Dashboard() {
           </View>
           <View>
             <Text style={styles.navCardTitle}>My Tasks</Text>
-            <Text style={styles.navCardSub}>Track your assigned work</Text>
+            <Text style={styles.navCardSub}>
+              Track your assigned work
+            </Text>
           </View>
         </View>
+
         <View style={styles.badgeRow}>
           {stats.active > 0 && (
             <View style={[styles.badge, { backgroundColor: "#dbeafe" }]}>
@@ -116,14 +167,20 @@ export default function Dashboard() {
               </Text>
             </View>
           )}
-          <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+          <Ionicons
+            name="chevron-forward"
+            size={18}
+            color="#94a3b8"
+          />
         </View>
       </TouchableOpacity>
 
       {/* INCOMPLETE TASKS */}
       <TouchableOpacity
         style={styles.navCard}
-        onPress={() => router.push("/(worker)/(tabs)/incomplete-tasks" as any)}
+        onPress={() =>
+          router.push("/(worker)/(tabs)/incomplete-tasks" as any)
+        }
       >
         <View style={styles.navCardLeft}>
           <View style={[styles.iconBox, { backgroundColor: "#fee2e2" }]}>
@@ -131,9 +188,12 @@ export default function Dashboard() {
           </View>
           <View>
             <Text style={styles.navCardTitle}>Incomplete Tasks</Text>
-            <Text style={styles.navCardSub}>Tasks needing attention</Text>
+            <Text style={styles.navCardSub}>
+              Tasks needing attention
+            </Text>
           </View>
         </View>
+
         <View style={styles.badgeRow}>
           {stats.incomplete > 0 && (
             <View style={[styles.badge, { backgroundColor: "#fee2e2" }]}>
@@ -142,20 +202,23 @@ export default function Dashboard() {
               </Text>
             </View>
           )}
-          <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+          <Ionicons
+            name="chevron-forward"
+            size={18}
+            color="#94a3b8"
+          />
         </View>
       </TouchableOpacity>
-
     </ScrollView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8fafc",
     padding: 16,
   },
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -163,23 +226,28 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     marginTop: 8,
   },
+
   welcome: {
     fontSize: 14,
     color: "#64748b",
   },
+
   name: {
     fontSize: 24,
     fontWeight: "800",
     color: "#0f172a",
   },
+
   profileBtn: {
     padding: 4,
   },
+
   statsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 24,
   },
+
   statCard: {
     flex: 1,
     backgroundColor: "#fff",
@@ -192,21 +260,25 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 2,
   },
+
   statNumber: {
     fontSize: 18,
     fontWeight: "700",
     color: "#2563eb",
   },
+
   statLabel: {
     fontSize: 12,
     color: "#64748b",
   },
+
   sectionTitle: {
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 12,
     color: "#0f172a",
   },
+
   navCard: {
     backgroundColor: "#fff",
     padding: 16,
@@ -220,11 +292,13 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 2,
   },
+
   navCardLeft: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
   },
+
   iconBox: {
     width: 44,
     height: 44,
@@ -232,27 +306,32 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+
   navCardTitle: {
     fontSize: 15,
     fontWeight: "700",
     color: "#0f172a",
   },
+
   navCardSub: {
     fontSize: 12,
     color: "#64748b",
     marginTop: 2,
   },
+
   badgeRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
   },
+
   badge: {
     backgroundColor: "#fef3c7",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 20,
   },
+
   badgeText: {
     fontSize: 11,
     fontWeight: "700",
