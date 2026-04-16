@@ -1,5 +1,8 @@
 export type Task = {
   id: string;
+  taskId?: string;
+  complaintId?: string;
+  workerId?: string;
   type: "campus" | "hostel";
   issueType: string;
   description?: string;
@@ -11,13 +14,17 @@ export type Task = {
   floor?: string;
   room?: string;
 
-  image?: string;           // ✅ ADD THIS
+  image?: string;
   reportedAt: string;
 
   status: string;
 
+  assignedAt?: string;
+  acceptedAt?: string;
+  startedAt?: string;
+  completedAt?: string;
+
   // optional worker-side fields
   note?: string;
   completedImage?: string;
-  completedAt?: string;
 };

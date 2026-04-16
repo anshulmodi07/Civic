@@ -207,9 +207,11 @@
  */
 
 import api from "./axios";
+import { USE_DEMO_API } from "./config";
 
 // ─── CONFIG ────────────────────────────────────────────────────────────────────
-export const USE_DEMO_API = true; // flip to false when backend is ready
+// USE_DEMO_API is controlled through environment variables so the app can switch
+// cleanly between demo mode and real backend mode without changing source code.
 
 // Simulated network latency (ms)
 const DEMO_DELAY_MS = 500;
@@ -221,10 +223,25 @@ export const COMPLAINT_TYPES = {
 };
 
 export const COMPLAINT_STATUS = {
+  NEW: "new",
   PENDING: "pending",
   ASSIGNED: "assigned",
   IN_PROGRESS: "in-progress",
   CLOSED: "closed",
+};
+
+/**
+ * The app currently uses `pending` in UI flows, while the backend may treat the
+ * initial complaint state as `new`. Use this helper to compare them as equivalent.
+ */
+const normalizeComplaintStatus = (status) => {
+  if (status === COMPLAINT_STATUS.PENDING) return COMPLAINT_STATUS.NEW;
+  return status;
+};
+
+const statusMatches = (actual, filter) => {
+  if (!filter) return true;
+  return normalizeComplaintStatus(actual) === normalizeComplaintStatus(filter);
 };
 
 export const ISSUE_TYPES = [
@@ -263,25 +280,31 @@ const createDemoStore = () => {
     {
       _id: "c001",
       type: COMPLAINT_TYPES.HOSTEL,
+      citizenId: "user_demo",
       hostelName: "hostel_a",
       floor: "3",
       roomNumber: "302",
       issueType: "electrician",
+      priority: "medium",
       description:
         "Ceiling fan not working and one electrical socket is damaged in room. Already reported to warden but no action taken.",
       status: COMPLAINT_STATUS.IN_PROGRESS,
       createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
       updatedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
       location: { lat: 28.7450, lng: 77.1120 },
+      supporters: ["user_demo"],
       upvotes: 6,
-      upvotedBy: ["user_demo"],
+      comments: [],
       images: [],
+      assignedTaskId: null,
       assignedTo: "Maintenance Team A",
     },
     {
       _id: "c002",
       type: COMPLAINT_TYPES.CAMPUS,
+      citizenId: "user_demo",
       issueType: "plumber",
+      priority: "medium",
       locationLandmark: "Mess Block",
       locationAddress: "Near Mess 2, NIT Delhi",
       description:
@@ -290,32 +313,39 @@ const createDemoStore = () => {
       createdAt: new Date(Date.now() - 10 * 86400000).toISOString(),
       updatedAt: new Date(Date.now() - 8 * 86400000).toISOString(),
       location: { lat: 28.7435, lng: 77.1140 },
+      supporters: [],
       upvotes: 3,
-      upvotedBy: [],
+      comments: [],
       images: [],
+      assignedTaskId: "t001",
       assignedTo: "Plumbing Dept",
     },
     {
       _id: "c003",
       type: COMPLAINT_TYPES.HOSTEL,
+      citizenId: "user_demo",
       hostelName: "hostel_b",
       floor: "2",
       roomNumber: "205",
       issueType: "ac",
+      priority: "medium",
       description: "AC unit is not cooling properly in the girls' hostel common room.",
       status: COMPLAINT_STATUS.PENDING,
       createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
       updatedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
       location: { lat: 28.7462, lng: 77.1105 },
+      supporters: [],
       upvotes: 4,
-      upvotedBy: [],
+      comments: [],
       images: [],
-      assignedTo: null,
+      assignedTaskId: null,
     },
     {
       _id: "c004",
       type: COMPLAINT_TYPES.CAMPUS,
+      citizenId: "user_demo",
       issueType: "sanitation",
+      priority: "medium",
       locationLandmark: "Main Gate",
       locationAddress: "Entrance area, NIT Delhi main gate",
       description:
@@ -324,33 +354,40 @@ const createDemoStore = () => {
       createdAt: new Date(Date.now() - 18 * 86400000).toISOString(),
       updatedAt: new Date(Date.now() - 15 * 86400000).toISOString(),
       location: { lat: 28.7447, lng: 77.1168 },
+      supporters: [],
       upvotes: 4,
-      upvotedBy: [],
+      comments: [],
       images: [],
+      assignedTaskId: null,
       assignedTo: "Sanitation Team",
     },
     {
       _id: "c005",
       type: COMPLAINT_TYPES.HOSTEL,
+      citizenId: "user_demo",
       hostelName: "hostel_c",
       floor: "1",
       roomNumber: "108",
       issueType: "wifi",
+      priority: "medium",
       description:
         "WiFi signal is extremely weak in the girls' hostel block, making online classes difficult.",
       status: COMPLAINT_STATUS.PENDING,
       createdAt: new Date(Date.now() - 1 * 86400000).toISOString(),
       updatedAt: new Date(Date.now() - 1 * 86400000).toISOString(),
       location: { lat: 28.7471, lng: 77.1149 },
+      supporters: [],
       upvotes: 2,
-      upvotedBy: [],
+      comments: [],
       images: [],
-      assignedTo: null,
+      assignedTaskId: null,
     },
     {
       _id: "c006",
       type: COMPLAINT_TYPES.CAMPUS,
+      citizenId: "user_demo",
       issueType: "construction",
+      priority: "medium",
       locationLandmark: "Sports Complex",
       locationAddress: "NIT Delhi sports complex",
       description:
@@ -359,9 +396,11 @@ const createDemoStore = () => {
       createdAt: new Date(Date.now() - 7 * 86400000).toISOString(),
       updatedAt: new Date(Date.now() - 5 * 86400000).toISOString(),
       location: { lat: 28.7423, lng: 77.1113 },
+      supporters: [],
       upvotes: 7,
-      upvotedBy: [],
+      comments: [],
       images: [],
+      assignedTaskId: null,
       assignedTo: "Civil Works Team",
     },
   ];
@@ -470,7 +509,9 @@ export const getCitizenDashboard = async () => {
       activeComplaints: mine.filter(
         (c) => c.status === COMPLAINT_STATUS.IN_PROGRESS || c.status === COMPLAINT_STATUS.ASSIGNED
       ).length,
-      pendingComplaints: mine.filter((c) => c.status === COMPLAINT_STATUS.PENDING).length,
+      pendingComplaints: mine.filter(
+        (c) => normalizeComplaintStatus(c.status) === COMPLAINT_STATUS.NEW
+      ).length,
       resolvedComplaints: mine.filter((c) => c.status === COMPLAINT_STATUS.CLOSED).length,
     };
   }
@@ -485,7 +526,7 @@ export const getAllComplaints = async ({ status, type, issueType } = {}) => {
   if (USE_DEMO_API) {
     await delay();
     let results = DEMO_STORE.getAll();
-    if (status) results = results.filter((c) => c.status === status);
+    if (status) results = results.filter((c) => statusMatches(c.status, status));
     if (type) results = results.filter((c) => c.type === type);
     if (issueType) results = results.filter((c) => c.issueType === issueType);
     return results;
@@ -547,20 +588,24 @@ export const createComplaint = async (payload) => {
     const newComplaint = {
       _id: genId(),
       type: data.type || COMPLAINT_TYPES.CAMPUS,
+      citizenId: "user_demo",
       hostelName: data.hostelName || null,
       floor: data.floor || null,
       roomNumber: data.roomNumber || null,
       locationLandmark: data.locationLandmark || null,
       locationAddress: data.locationAddress || null,
       issueType: data.issueType || "other",
+      priority: data.priority || "medium",
       description: data.description || "",
       status: COMPLAINT_STATUS.PENDING,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       location: data.location || { lat: 0, lng: 0 },
+      supporters: [],
       upvotes: 0,
-      upvotedBy: [],
+      comments: [],
       images: data.images || [],
+      assignedTaskId: null,
       assignedTo: null,
     };
     await delay();
@@ -590,7 +635,10 @@ export const toggleUpvote = async (complaintId, userId = "user_demo") => {
   }
 
   const response = await api.post(`/complaints/${complaintId}/support`);
-  return response.data;
+  return {
+    upvotes: response.data.supporters ?? 0,
+    upvoted: true,
+  };
 };
 
 /**

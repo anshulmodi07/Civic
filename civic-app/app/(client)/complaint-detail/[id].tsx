@@ -14,7 +14,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import StatusBadge from "@/src/components/StatusBadge";
-import { getComplaintById } from "@/src/api/complaint.api";
+import { getComplaintById, toggleUpvote } from "@/src/api/complaint.api";
 import api from "@/src/api/axios";
 
 type Complaint = {
@@ -69,9 +69,9 @@ export default function ComplaintDetail() {
     
     setIsUpvoting(true);
     try {
-      const response = await api.patch(`/complaints/${complaint._id}/upvote`);
-      setComplaint(prev => prev ? { ...prev, upvotes: response.data.upvotes } : null);
-      setHasUpvoted(true);
+      const result = await toggleUpvote(complaint._id);
+      setComplaint(prev => prev ? { ...prev, upvotes: result.upvotes } : null);
+      setHasUpvoted(result.upvoted);
       Alert.alert("Success", "Thank you for your support!", [{ text: "OK" }]);
     } catch (error: any) {
       const message = error.response?.data?.message || "Unable to upvote";
