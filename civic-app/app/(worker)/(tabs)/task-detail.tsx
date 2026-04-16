@@ -8,14 +8,16 @@ import {
   Modal,
   Alert,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState, useEffect } from "react";
+
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
+import { useState, useCallback } from "react";
 import * as ImagePicker from "expo-image-picker";
 import {
   startTask,
   completeTask,
   getAllTasks,
   getMyTasks,
+  reviveTask,
 } from "@/src/api/tasks.api";
 import ImagePreview from "@/src/components/ImagePreview";
 import StatusBadge from "@/src/components/StatusBadge";
@@ -28,7 +30,6 @@ export default function TaskDetail() {
   const parsedTask = JSON.parse(taskString!);
 
   const [currentTask, setCurrentTask] = useState(parsedTask);
-  
   const [image, setImage] = useState<string | null>(null);
 
   // Modal state
@@ -41,13 +42,19 @@ export default function TaskDetail() {
       ...(await getAllTasks()),
       ...(await getMyTasks()),
     ];
-    const updated = allTasks.find((t) => t.id === parsedTask.id);
-    if (updated) setCurrentTask(updated);
+    const updated = allTasks.find((t) => t.id === parsedTask.id) || parsedTask;
+    setCurrentTask(updated);
+    setImage(null);
+    setModalVisible(false);
+    setModalType(null);
+    setModalNote("");
   };
 
-  useEffect(() => {
-    loadTask();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadTask();
+    }, [parsedTask.id])
+  );
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7 });
@@ -65,24 +72,27 @@ export default function TaskDetail() {
     setModalVisible(true);
   };
 
-const handleConfirm = async () => {
-  if (!modalType) return;
+  const handleRevive = async () => {
+    await reviveTask(currentTask.id);
+    router.back();
+  };
 
-  // 👇 image is mandatory
-  if (!image) {
-    Alert.alert(
-      "Photo Required",
-      "Please upload a photo of the work before marking as complete or incomplete.",
-      [{ text: "OK" }]
-    );
-    setModalVisible(false);
-    return;
-  }
+  const handleConfirm = async () => {
+    if (!modalType) return;
 
-  await completeTask(currentTask.id, modalType, modalNote, image);
-  setModalVisible(false);
-  router.back();
-};
+    if (!image) {
+      Alert.alert(
+        "Photo Required",
+        "Please upload a photo of the work before marking as complete or incomplete.",
+        [{ text: "OK" }]
+      );
+      setModalVisible(false);
+      return;
+    }
+
+    await completeTask(currentTask.id, modalType, modalNote, image);
+    await loadTask();
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -122,23 +132,22 @@ const handleConfirm = async () => {
         </Text>
       </View>
 
-      {/* START BUTTON */}
+      {/* START BUTTON — accepted only */}
       {currentTask.status === "accepted" && (
         <TouchableOpacity
           style={styles.primaryButton}
           onPress={async () => {
             await startTask(currentTask.id);
-            router.back();
+            setCurrentTask({ ...currentTask, status: "in-progress" });
           }}
         >
           <Text style={styles.primaryText}>▶ Start Task</Text>
         </TouchableOpacity>
       )}
 
-      {/* IN PROGRESS */}
+      {/* IN PROGRESS — upload + complete/incomplete actions only rendered here */}
       {currentTask.status === "in-progress" && (
         <View style={styles.section}>
-
           <Text style={styles.sectionTitle}>Upload Proof of Work</Text>
 
           <View style={styles.row}>
@@ -152,8 +161,6 @@ const handleConfirm = async () => {
 
           {image && <ImagePreview uri={image} size={180} />}
 
-          
-
           <TouchableOpacity
             style={styles.successBtn}
             onPress={() => openModal("completed")}
@@ -166,6 +173,36 @@ const handleConfirm = async () => {
             onPress={() => openModal("incomplete")}
           >
             <Text style={styles.btnText}>❌ Mark Incomplete</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* INCOMPLETE — read-only view + revive only, no other actions */}
+      {currentTask.status === "incomplete" && (
+        <View style={styles.section}>
+          <View style={styles.incompleteNotice}>
+            <Text style={styles.incompleteTitle}>⚠️ Task Incomplete</Text>
+            <Text style={styles.incompleteText}>
+              This task has been marked incomplete. Revive it to restart work.
+            </Text>
+          </View>
+
+          {currentTask.completedImage ? (
+            <>
+              <Text style={styles.sectionTitle}>Previous Photo</Text>
+              <ImagePreview uri={currentTask.completedImage} size={180} />
+            </>
+          ) : null}
+
+          {currentTask.note ? (
+            <View style={styles.commentBox}>
+              <Text style={styles.commentLabel}>Last Note</Text>
+              <Text style={styles.commentText}>{currentTask.note}</Text>
+            </View>
+          ) : null}
+
+          <TouchableOpacity style={styles.reviveBtn} onPress={handleRevive}>
+            <Text style={styles.reviveBtnText}>🔄 Revive Task</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -325,7 +362,43 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
   },
-
+  // Incomplete notice block
+  incompleteNotice: {
+    backgroundColor: "#fff7ed",
+    borderWidth: 1,
+    borderColor: "#fed7aa",
+    borderRadius: 12,
+    padding: 14,
+    gap: 4,
+  },
+  incompleteTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#9a3412",
+  },
+  incompleteText: {
+    fontSize: 13,
+    color: "#c2410c",
+    lineHeight: 18,
+  },
+  commentBox: {
+    backgroundColor: "#f1f5f9",
+    borderRadius: 12,
+    padding: 14,
+    gap: 4,
+  },
+  commentLabel: {
+    fontSize: 12,
+    color: "#64748b",
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  commentText: {
+    fontSize: 14,
+    color: "#334155",
+    lineHeight: 20,
+  },
   // Modal
   modalOverlay: {
     flex: 1,
@@ -385,5 +458,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     backgroundColor: "#dc2626",
+  },
+  reviveBtn: {
+    backgroundColor: "#2563eb",
+    padding: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    marginBottom: 30,
+  },
+  reviveBtnText: {
+    color: "#fff",
+    fontWeight: "700",
   },
 });

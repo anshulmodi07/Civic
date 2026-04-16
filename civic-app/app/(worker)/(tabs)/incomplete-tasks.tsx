@@ -1,7 +1,7 @@
 import { View, FlatList, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { useState, useCallback } from "react";
 import { useFocusEffect, useRouter } from "expo-router";
-import { getMyTasks } from "@/src/api/tasks.api";
+import { getMyTasks, reviveTask } from "@/src/api/tasks.api";
 import { Task } from "@/src/types/task";
 
 export default function IncompleteTasks() {
@@ -15,8 +15,21 @@ export default function IncompleteTasks() {
 
   useFocusEffect(useCallback(() => { loadTasks(); }, []));
 
+  const handleRevive = async (id: string) => {
+    await reviveTask(id);
+    await loadTasks();
+  };
+
   const renderItem = ({ item }: { item: Task }) => (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() =>
+        router.push({
+          pathname: "/(worker)/task-detail",
+          params: { task: JSON.stringify(item) },
+        } as any)
+      }
+    >
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>{item.issueType}</Text>
         <View style={styles.badge}>
@@ -39,7 +52,15 @@ export default function IncompleteTasks() {
           <Text style={styles.commentText}>{item.note}</Text>
         </View>
       )}
-    </View>
+
+      {/* REVIVE BUTTON */}
+      <TouchableOpacity
+        style={styles.reviveButton}
+        onPress={() => handleRevive(item.id)}
+      >
+        <Text style={styles.reviveButtonText}>🔄 Revive Task</Text>
+      </TouchableOpacity>
+    </TouchableOpacity>
   );
 
   return (
@@ -86,10 +107,15 @@ const styles = StyleSheet.create({
   time: { fontSize: 12, color: "#94a3b8", marginBottom: 8 },
   commentBox: {
     backgroundColor: "#fef9c3", padding: 10, borderRadius: 10,
-    borderLeftWidth: 3, borderLeftColor: "#eab308",
+    borderLeftWidth: 3, borderLeftColor: "#eab308", marginBottom: 12,
   },
   commentLabel: { fontSize: 11, fontWeight: "700", color: "#92400e", marginBottom: 4 },
   commentText: { fontSize: 13, color: "#1c1917" },
+  reviveButton: {
+    backgroundColor: "#10b981", paddingVertical: 10, borderRadius: 10,
+    alignItems: "center", marginTop: 8,
+  },
+  reviveButtonText: { fontSize: 13, fontWeight: "700", color: "#fff" },
   emptyState: { marginTop: 80, alignItems: "center" },
   emptyText: { color: "#64748b", fontSize: 14 },
 });

@@ -11,12 +11,18 @@ export type Task = {
   floor?: string;
   room?: string;
 
-  image?: string;           // ✅ ADD THIS
+  image?: string;
   reportedAt: string;
 
-  status: string;
+  status:
+    | "pending"
+    | "accepted"
+    | "in-progress"
+    | "completed"
+    | "incomplete";
 
-  // optional worker-side fields
+  shift?: "morning" | "evening" | "night" | "off";
+
   note?: string;
   completedImage?: string;
   completedAt?: string;
