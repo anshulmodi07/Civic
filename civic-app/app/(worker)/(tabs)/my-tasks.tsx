@@ -1,15 +1,10 @@
-import {
-  View,
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-} from "react-native";
+import { View, FlatList, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { useState, useCallback } from "react";
 import { getMyTasks, startTask } from "@/src/api/tasks.api";
 import { useFocusEffect, useRouter } from "expo-router";
 import TaskCard from "@/src/components/TaskCard";
 import { Task } from "@/src/types/task";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function MyTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -17,7 +12,6 @@ export default function MyTasks() {
 
   const loadTasks = async () => {
     const data = await getMyTasks();
-    // exclude incomplete tasks — they go to incomplete screen
     setTasks(data.filter((t) => t.status !== "incomplete"));
   };
 
@@ -36,9 +30,8 @@ export default function MyTasks() {
 
   const renderItem = ({ item }: { item: Task }) => {
     const isCompleted = item.status === "completed";
-
     return (
-      <View style={[styles.cardWrapper, isCompleted && styles.cardWrapperGrey]}>
+      <View style={[styles.cardWrapper, isCompleted && styles.cardFaded]}>
         <TaskCard
           task={item}
           onPress={() =>
@@ -48,21 +41,24 @@ export default function MyTasks() {
             } as any)
           }
         />
-
         <View style={styles.actions}>
           {item.status === "accepted" && (
-            <TouchableOpacity
-              style={styles.startButton}
-              onPress={() => handleStart(item.id)}
-            >
-              <Text style={styles.startButtonText}>▶ Start Task</Text>
+            <TouchableOpacity style={styles.startBtn} onPress={() => handleStart(item.id)}>
+              <Ionicons name="play" size={14} color="#fff" />
+              <Text style={styles.startBtnText}>Start task</Text>
             </TouchableOpacity>
           )}
           {item.status === "in-progress" && (
-            <Text style={styles.inProgressText}>🔄 In Progress</Text>
+            <View style={styles.statusPill}>
+              <View style={[styles.statusDot, { backgroundColor: "#378ADD" }]} />
+              <Text style={[styles.statusText, { color: "#185FA5" }]}>In progress</Text>
+            </View>
           )}
           {item.status === "completed" && (
-            <Text style={styles.completedText}>✅ Completed</Text>
+            <View style={styles.statusPill}>
+              <View style={[styles.statusDot, { backgroundColor: "#3B6D11" }]} />
+              <Text style={[styles.statusText, { color: "#3B6D11" }]}>Completed</Text>
+            </View>
           )}
         </View>
       </View>
@@ -71,29 +67,25 @@ export default function MyTasks() {
 
   return (
     <View style={styles.container}>
-      {/* BACK BUTTON */}
       <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-        <Text style={styles.backText}>← Back</Text>
+        <Ionicons name="chevron-back" size={16} color="#185FA5" />
+        <Text style={styles.backText}>Back</Text>
       </TouchableOpacity>
 
-      <View style={styles.header}>
-        <Text style={styles.heading}>My Tasks</Text>
-        <Text style={styles.subHeading}>Manage your assigned work</Text>
-      </View>
+      <Text style={styles.pageTitle}>My tasks</Text>
+      <Text style={styles.pageSub}>Manage your assigned work</Text>
 
       <View style={styles.statsRow}>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{stats.total}</Text>
-          <Text style={styles.statLabel}>Total</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{stats.inProgress}</Text>
-          <Text style={styles.statLabel}>Active</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{stats.completed}</Text>
-          <Text style={styles.statLabel}>Completed</Text>
-        </View>
+        {[
+          { num: stats.total, label: "Total" },
+          { num: stats.inProgress, label: "Active" },
+          { num: stats.completed, label: "Completed" },
+        ].map((s) => (
+          <View key={s.label} style={styles.statCard}>
+            <Text style={styles.statNum}>{s.num}</Text>
+            <Text style={styles.statLabel}>{s.label}</Text>
+          </View>
+        ))}
       </View>
 
       <FlatList
@@ -103,8 +95,8 @@ export default function MyTasks() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 30 }}
         ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No tasks yet 🚀</Text>
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>No tasks yet</Text>
           </View>
         }
       />
@@ -113,30 +105,38 @@ export default function MyTasks() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8fafc", padding: 16 },
-  backBtn: { marginBottom: 12, marginTop: 8 },
-  backText: { fontSize: 14, color: "#2563eb", fontWeight: "600" },
-  header: { marginBottom: 16 },
-  heading: { fontSize: 24, fontWeight: "800", color: "#0f172a" },
-  subHeading: { fontSize: 13, color: "#64748b", marginTop: 4 },
-  statsRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 20 },
+  container: { flex: 1, backgroundColor: "#F8FAFC", padding: 16 },
+  backBtn: { flexDirection: "row", alignItems: "center", gap: 2, marginBottom: 16, marginTop: 8 },
+  backText: { fontSize: 14, color: "#185FA5", fontWeight: "500" },
+  pageTitle: { fontSize: 22, fontWeight: "500", color: "#0f172a" },
+  pageSub: { fontSize: 13, color: "#888780", marginTop: 4, marginBottom: 20 },
+
+  statsRow: { flexDirection: "row", gap: 10, marginBottom: 20 },
   statCard: {
-    flex: 1, backgroundColor: "#fff", padding: 14, borderRadius: 14,
-    alignItems: "center", marginHorizontal: 4,
-    shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 10, elevation: 2,
+    flex: 1, backgroundColor: "#F1EFE8", borderRadius: 12, padding: 14, alignItems: "center",
   },
-  statNumber: { fontSize: 18, fontWeight: "700", color: "#2563eb" },
-  statLabel: { fontSize: 12, color: "#64748b" },
-  cardWrapper: { marginBottom: 16 },
-  cardWrapperGrey: { opacity: 0.5 }, // 👈 grey out completed
+  statNum: { fontSize: 20, fontWeight: "500", color: "#185FA5" },
+  statLabel: { fontSize: 11, color: "#888780" },
+
+  cardWrapper: { marginBottom: 14 },
+  cardFaded: { opacity: 0.5 },
   actions: { marginTop: 8, alignItems: "flex-start" },
-  startButton: {
-    backgroundColor: "#2563eb", paddingVertical: 10,
-    paddingHorizontal: 16, borderRadius: 12,
+
+  startBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#185FA5",
+    paddingVertical: 9,
+    paddingHorizontal: 16,
+    borderRadius: 10,
   },
-  startButtonText: { color: "#fff", fontWeight: "600" },
-  inProgressText: { color: "#3b82f6", fontWeight: "600" },
-  completedText: { color: "#16a34a", fontWeight: "600" },
-  emptyState: { marginTop: 80, alignItems: "center" },
-  emptyText: { color: "#64748b", fontSize: 14 },
+  startBtnText: { color: "#fff", fontWeight: "500", fontSize: 13 },
+
+  statusPill: { flexDirection: "row", alignItems: "center", gap: 6 },
+  statusDot: { width: 6, height: 6, borderRadius: 3 },
+  statusText: { fontSize: 13, fontWeight: "500" },
+
+  empty: { marginTop: 80, alignItems: "center" },
+  emptyText: { color: "#888780", fontSize: 14 },
 });

@@ -1,47 +1,29 @@
 import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  Modal,
-  Alert,
+  View, Text, StyleSheet, TextInput, TouchableOpacity,
+  ScrollView, Modal, Alert,
 } from "react-native";
-
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { useState, useCallback } from "react";
 import * as ImagePicker from "expo-image-picker";
-import {
-  startTask,
-  completeTask,
-  getAllTasks,
-  getMyTasks,
-  reviveTask,
-} from "@/src/api/tasks.api";
+import { startTask, completeTask, getAllTasks, getMyTasks, reviveTask } from "@/src/api/tasks.api";
 import ImagePreview from "@/src/components/ImagePreview";
 import StatusBadge from "@/src/components/StatusBadge";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function TaskDetail() {
   const router = useRouter();
   const { task } = useLocalSearchParams();
-
   const taskString = Array.isArray(task) ? task[0] : task;
   const parsedTask = JSON.parse(taskString!);
 
   const [currentTask, setCurrentTask] = useState(parsedTask);
   const [image, setImage] = useState<string | null>(null);
-
-  // Modal state
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState<"completed" | "incomplete" | null>(null);
   const [modalNote, setModalNote] = useState("");
 
   const loadTask = async () => {
-    const allTasks = [
-      ...(await getAllTasks()),
-      ...(await getMyTasks()),
-    ];
+    const allTasks = [...(await getAllTasks()), ...(await getMyTasks())];
     const updated = allTasks.find((t) => t.id === parsedTask.id) || parsedTask;
     setCurrentTask(updated);
     setImage(null);
@@ -50,11 +32,7 @@ export default function TaskDetail() {
     setModalNote("");
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      loadTask();
-    }, [parsedTask.id])
-  );
+  useFocusEffect(useCallback(() => { loadTask(); }, [parsedTask.id]));
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7 });
@@ -79,27 +57,25 @@ export default function TaskDetail() {
 
   const handleConfirm = async () => {
     if (!modalType) return;
-
     if (!image) {
-      Alert.alert(
-        "Photo Required",
-        "Please upload a photo of the work before marking as complete or incomplete.",
-        [{ text: "OK" }]
-      );
+      Alert.alert("Photo required", "Please upload a photo before submitting.", [{ text: "OK" }]);
       setModalVisible(false);
       return;
     }
-
     await completeTask(currentTask.id, modalType, modalNote, image);
     await loadTask();
   };
 
-  return (
-    <ScrollView style={styles.container}>
+  const isIncomplete = currentTask.status === "incomplete";
+  const isInProgress = currentTask.status === "in-progress";
+  const isAccepted = currentTask.status === "accepted";
 
-      {/* BACK BUTTON */}
+  return (
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* BACK */}
       <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-        <Text style={styles.backText}>← Back</Text>
+        <Ionicons name="chevron-back" size={16} color="#185FA5" />
+        <Text style={styles.backText}>Back</Text>
       </TouchableOpacity>
 
       {/* HEADER */}
@@ -108,106 +84,125 @@ export default function TaskDetail() {
         <StatusBadge status={currentTask.status} />
       </View>
 
-      {/* DETAILS CARD */}
-      <View style={styles.card}>
+      {/* DETAIL CARD */}
+      <View style={styles.detailCard}>
         {currentTask.type === "campus" ? (
           <>
-            <Text style={styles.label}>📍 Location</Text>
-            <Text style={styles.value}>{currentTask.landmark}</Text>
-            <Text style={styles.value}>{currentTask.address}</Text>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Location</Text>
+              <Text style={styles.detailValue}>{currentTask.landmark}</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Address</Text>
+              <Text style={styles.detailValue}>{currentTask.address}</Text>
+            </View>
           </>
         ) : (
           <>
-            <Text style={styles.label}>🏢 Hostel</Text>
-            <Text style={styles.value}>{currentTask.hostelName}</Text>
-            <Text style={styles.value}>
-              Floor {currentTask.floor} | Room {currentTask.room}
-            </Text>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Hostel</Text>
+              <Text style={styles.detailValue}>{currentTask.hostelName}</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Floor / Room</Text>
+              <Text style={styles.detailValue}>Floor {currentTask.floor}, Room {currentTask.room}</Text>
+            </View>
           </>
         )}
-        <Text style={styles.time}>🕒 {currentTask.reportedAt}</Text>
-        <Text style={styles.label}>Description</Text>
-        <Text style={styles.description}>
-          {currentTask.description || "No description provided"}
-        </Text>
+        <View style={styles.divider} />
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Reported at</Text>
+          <Text style={styles.detailValue}>{currentTask.reportedAt}</Text>
+        </View>
+        <View style={styles.divider} />
+        <View>
+          <Text style={styles.detailLabel}>Description</Text>
+          <Text style={styles.descText}>
+            {currentTask.description || "No description provided"}
+          </Text>
+        </View>
       </View>
 
-      {/* START BUTTON — accepted only */}
-      {currentTask.status === "accepted" && (
+      {/* START */}
+      {isAccepted && (
         <TouchableOpacity
-          style={styles.primaryButton}
+          style={styles.primaryBtn}
           onPress={async () => {
             await startTask(currentTask.id);
             setCurrentTask({ ...currentTask, status: "in-progress" });
           }}
         >
-          <Text style={styles.primaryText}>▶ Start Task</Text>
+          <Ionicons name="play" size={15} color="#fff" />
+          <Text style={styles.primaryBtnText}>Start task</Text>
         </TouchableOpacity>
       )}
 
-      {/* IN PROGRESS — upload + complete/incomplete actions only rendered here */}
-      {currentTask.status === "in-progress" && (
+      {/* IN PROGRESS */}
+      {isInProgress && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Upload Proof of Work</Text>
+          <Text style={styles.sectionTitle}>Upload proof of work</Text>
 
-          <View style={styles.row}>
-            <TouchableOpacity style={styles.secondaryBtn} onPress={pickImage}>
-              <Text style={styles.secondaryBtnText}>🖼 Gallery</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.secondaryBtn} onPress={openCamera}>
-              <Text style={styles.secondaryBtnText}>📷 Camera</Text>
-            </TouchableOpacity>
+          <View style={styles.uploadZone}>
+            <Text style={styles.uploadZoneTitle}>Photo required before submitting</Text>
+            <View style={styles.uploadBtnRow}>
+              <TouchableOpacity style={styles.uploadBtn} onPress={pickImage}>
+                <Ionicons name="images-outline" size={15} color="#5F5E5A" />
+                <Text style={styles.uploadBtnText}>Gallery</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.uploadBtn} onPress={openCamera}>
+                <Ionicons name="camera-outline" size={15} color="#5F5E5A" />
+                <Text style={styles.uploadBtnText}>Camera</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {image && <ImagePreview uri={image} size={180} />}
 
-          <TouchableOpacity
-            style={styles.successBtn}
-            onPress={() => openModal("completed")}
-          >
-            <Text style={styles.btnText}>✅ Mark Completed</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.dangerBtn}
-            onPress={() => openModal("incomplete")}
-          >
-            <Text style={styles.btnText}>❌ Mark Incomplete</Text>
-          </TouchableOpacity>
+          <View style={styles.actionRow}>
+            <TouchableOpacity style={styles.successBtn} onPress={() => openModal("completed")}>
+              <Text style={styles.actionBtnText}>Mark completed</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.dangerBtn} onPress={() => openModal("incomplete")}>
+              <Text style={styles.actionBtnText}>Mark incomplete</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
-      {/* INCOMPLETE — read-only view + revive only, no other actions */}
-      {currentTask.status === "incomplete" && (
+      {/* INCOMPLETE */}
+      {isIncomplete && (
         <View style={styles.section}>
-          <View style={styles.incompleteNotice}>
-            <Text style={styles.incompleteTitle}>⚠️ Task Incomplete</Text>
-            <Text style={styles.incompleteText}>
-              This task has been marked incomplete. Revive it to restart work.
+          <View style={styles.warningBox}>
+            <Text style={styles.warningTitle}>Task marked incomplete</Text>
+            <Text style={styles.warningText}>
+              This task needs rework. Revive it to resume and re-submit.
             </Text>
           </View>
 
-          {currentTask.completedImage ? (
+          {currentTask.completedImage && (
             <>
-              <Text style={styles.sectionTitle}>Previous Photo</Text>
+              <Text style={styles.sectionTitle}>Previous photo</Text>
               <ImagePreview uri={currentTask.completedImage} size={180} />
             </>
-          ) : null}
+          )}
 
-          {currentTask.note ? (
-            <View style={styles.commentBox}>
-              <Text style={styles.commentLabel}>Last Note</Text>
-              <Text style={styles.commentText}>{currentTask.note}</Text>
+          {currentTask.note && (
+            <View style={styles.noteBox}>
+              <Text style={styles.noteLabel}>Worker's note</Text>
+              <Text style={styles.noteText}>{currentTask.note}</Text>
             </View>
-          ) : null}
+          )}
 
-          <TouchableOpacity style={styles.reviveBtn} onPress={handleRevive}>
-            <Text style={styles.reviveBtnText}>🔄 Revive Task</Text>
+          <TouchableOpacity style={styles.primaryBtn} onPress={handleRevive}>
+            <Ionicons name="refresh" size={15} color="#fff" />
+            <Text style={styles.primaryBtnText}>Revive task</Text>
           </TouchableOpacity>
         </View>
       )}
 
-      {/* CONFIRMATION MODAL */}
+      {/* MODAL */}
       <Modal
         visible={modalVisible}
         transparent
@@ -217,17 +212,17 @@ export default function TaskDetail() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>
-              {modalType === "completed" ? "✅ Mark as Completed" : "❌ Mark as Incomplete"}
+              {modalType === "completed" ? "Mark as completed" : "Mark as incomplete"}
             </Text>
-
-            <Text style={styles.modalSubtitle}>
+            <Text style={styles.modalSub}>
               {modalType === "completed"
-                ? "Please describe what was done."
-                : "Please explain why the task is incomplete."}
+                ? "Describe what was done to resolve the issue."
+                : "Explain why the task cannot be completed right now."}
             </Text>
 
             <TextInput
-              placeholder="Write your reason..."
+              placeholder="Write your note..."
+              placeholderTextColor="#B4B2A9"
               value={modalNote}
               onChangeText={setModalNote}
               style={styles.modalInput}
@@ -235,239 +230,130 @@ export default function TaskDetail() {
             />
 
             <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.cancelBtn}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.cancelText}>Cancel</Text>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)}>
+                <Text style={styles.cancelBtnText}>Cancel</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
                 style={modalType === "completed" ? styles.confirmSuccessBtn : styles.confirmDangerBtn}
                 onPress={handleConfirm}
               >
-                <Text style={styles.btnText}>Confirm</Text>
+                <Text style={styles.actionBtnText}>Confirm</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8fafc",
-    padding: 16,
-  },
-  backBtn: {
-    marginBottom: 12,
-    marginTop: 8,
-  },
-  backText: {
-    fontSize: 14,
-    color: "#2563eb",
-    fontWeight: "600",
-  },
-  header: {
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#0f172a",
-    marginBottom: 6,
-  },
-  card: {
-    backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  label: {
-    fontSize: 13,
-    color: "#64748b",
-    marginTop: 10,
-  },
-  value: {
-    fontSize: 14,
-    color: "#0f172a",
-    fontWeight: "600",
-  },
-  description: {
-    marginTop: 6,
-    fontSize: 14,
-    color: "#334155",
-  },
-  time: {
-    marginTop: 10,
-    fontSize: 12,
-    color: "#94a3b8",
-  },
-  primaryButton: {
-    backgroundColor: "#2563eb",
-    padding: 14,
+  container: { flex: 1, backgroundColor: "#F8FAFC", padding: 16 },
+  backBtn: { flexDirection: "row", alignItems: "center", gap: 2, marginBottom: 16, marginTop: 8 },
+  backText: { fontSize: 14, color: "#185FA5", fontWeight: "500" },
+
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 },
+  title: { fontSize: 20, fontWeight: "500", color: "#0f172a", flex: 1, marginRight: 10, lineHeight: 26 },
+
+  detailCard: {
+    backgroundColor: "#F1EFE8",
     borderRadius: 14,
-    alignItems: "center",
+    padding: 16,
     marginBottom: 20,
   },
-  primaryText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-  section: {
-    gap: 12,
-  },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#0f172a",
-  },
-  row: {
+  detailRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", paddingVertical: 4 },
+  detailLabel: { fontSize: 12, color: "#888780" },
+  detailValue: { fontSize: 13, fontWeight: "500", color: "#0f172a", textAlign: "right", maxWidth: "60%" },
+  divider: { height: 0.5, backgroundColor: "#D3D1C7", marginVertical: 8 },
+  descText: { fontSize: 13, color: "#444441", lineHeight: 20, marginTop: 6 },
+
+  primaryBtn: {
+    backgroundColor: "#185FA5",
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: "center",
     flexDirection: "row",
-    gap: 10,
+    justifyContent: "center",
+    gap: 7,
+    marginBottom: 20,
   },
-  secondaryBtn: {
-    flex: 1,
-    padding: 10,
-    backgroundColor: "#e2e8f0",
+  primaryBtnText: { color: "#fff", fontWeight: "500", fontSize: 14 },
+
+  section: { gap: 12, marginBottom: 30 },
+  sectionTitle: { fontSize: 12, fontWeight: "500", color: "#888780", textTransform: "uppercase", letterSpacing: 0.6 },
+
+  uploadZone: {
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: "#B4B2A9",
+    borderRadius: 12,
+    padding: 18,
+    alignItems: "center",
+  },
+  uploadZoneTitle: { fontSize: 13, fontWeight: "500", color: "#0f172a", marginBottom: 12 },
+  uploadBtnRow: { flexDirection: "row", gap: 10 },
+  uploadBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#F1EFE8",
+    borderWidth: 0.5,
+    borderColor: "#D3D1C7",
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  uploadBtnText: { fontSize: 13, fontWeight: "500", color: "#444441" },
+
+  actionRow: { flexDirection: "row", gap: 10 },
+  successBtn: { flex: 1, backgroundColor: "#3B6D11", borderRadius: 12, paddingVertical: 13, alignItems: "center" },
+  dangerBtn: { flex: 1, backgroundColor: "#A32D2D", borderRadius: 12, paddingVertical: 13, alignItems: "center" },
+  actionBtnText: { color: "#fff", fontWeight: "500", fontSize: 13 },
+
+  warningBox: {
+    backgroundColor: "#FAEEDA",
+    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: "#EF9F27",
+    padding: 14,
+  },
+  warningTitle: { fontSize: 13, fontWeight: "500", color: "#854F0B", marginBottom: 4 },
+  warningText: { fontSize: 12, color: "#BA7517", lineHeight: 18 },
+
+  noteBox: {
+    backgroundColor: "#F1EFE8",
     borderRadius: 10,
-    alignItems: "center",
+    padding: 12,
   },
-  secondaryBtnText: {
-    fontWeight: "600",
-    color: "#334155",
-  },
-  successBtn: {
-    backgroundColor: "#16a34a",
-    padding: 14,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  dangerBtn: {
-    backgroundColor: "#dc2626",
-    padding: 14,
-    borderRadius: 12,
-    alignItems: "center",
-    marginBottom: 30,
-  },
-  btnText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-  // Incomplete notice block
-  incompleteNotice: {
-    backgroundColor: "#fff7ed",
-    borderWidth: 1,
-    borderColor: "#fed7aa",
-    borderRadius: 12,
-    padding: 14,
-    gap: 4,
-  },
-  incompleteTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#9a3412",
-  },
-  incompleteText: {
-    fontSize: 13,
-    color: "#c2410c",
-    lineHeight: 18,
-  },
-  commentBox: {
-    backgroundColor: "#f1f5f9",
-    borderRadius: 12,
-    padding: 14,
-    gap: 4,
-  },
-  commentLabel: {
-    fontSize: 12,
-    color: "#64748b",
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  commentText: {
-    fontSize: 14,
-    color: "#334155",
-    lineHeight: 20,
-  },
-  // Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "flex-end",
-  },
+  noteLabel: { fontSize: 11, fontWeight: "500", color: "#888780", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 },
+  noteText: { fontSize: 13, color: "#444441", lineHeight: 20 },
+
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" },
   modalCard: {
     backgroundColor: "#fff",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
-    gap: 12,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#0f172a",
-  },
-  modalSubtitle: {
-    fontSize: 13,
-    color: "#64748b",
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    padding: 12,
-    borderRadius: 12,
-    minHeight: 100,
-    backgroundColor: "#f8fafc",
-  },
-  modalActions: {
-    flexDirection: "row",
     gap: 10,
-    marginTop: 4,
   },
+  modalTitle: { fontSize: 17, fontWeight: "500", color: "#0f172a" },
+  modalSub: { fontSize: 13, color: "#888780" },
+  modalInput: {
+    borderWidth: 0.5,
+    borderColor: "#D3D1C7",
+    borderRadius: 12,
+    padding: 12,
+    minHeight: 100,
+    backgroundColor: "#F8FAFC",
+    color: "#0f172a",
+    fontSize: 14,
+    textAlignVertical: "top",
+  },
+  modalActions: { flexDirection: "row", gap: 10, marginTop: 4 },
   cancelBtn: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 12,
-    alignItems: "center",
-    backgroundColor: "#f1f5f9",
+    flex: 1, backgroundColor: "#F1EFE8", borderRadius: 12, paddingVertical: 13, alignItems: "center",
   },
-  cancelText: {
-    color: "#64748b",
-    fontWeight: "600",
-  },
-  confirmSuccessBtn: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 12,
-    alignItems: "center",
-    backgroundColor: "#16a34a",
-  },
-  confirmDangerBtn: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 12,
-    alignItems: "center",
-    backgroundColor: "#dc2626",
-  },
-  reviveBtn: {
-    backgroundColor: "#2563eb",
-    padding: 14,
-    borderRadius: 14,
-    alignItems: "center",
-    marginBottom: 30,
-  },
-  reviveBtnText: {
-    color: "#fff",
-    fontWeight: "700",
-  },
+  cancelBtnText: { color: "#5F5E5A", fontWeight: "500" },
+  confirmSuccessBtn: { flex: 1, backgroundColor: "#3B6D11", borderRadius: 12, paddingVertical: 13, alignItems: "center" },
+  confirmDangerBtn: { flex: 1, backgroundColor: "#A32D2D", borderRadius: 12, paddingVertical: 13, alignItems: "center" },
 });
