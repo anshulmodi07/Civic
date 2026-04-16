@@ -411,15 +411,20 @@ const createDemoStore = () => {
   return {
     complaints,
     myComplaintIds,
-    getAll: () => [...complaints],
-    getMine: () => complaints.filter((c) => myComplaintIds.has(c._id)),
-    getById: (id) => complaints.find((c) => c._id === id) || null,
+    getAll: () => complaints.map(normalizeComplaint),
+    getMine: () => complaints.filter((c) => myComplaintIds.has(c._id)).map(normalizeComplaint),
+    getById: (id) => {
+      const complaint = complaints.find((c) => c._id === id);
+      return complaint ? normalizeComplaint(complaint) : null;
+    },
     getNearby: (lat, lng, radiusKm = 5) =>
-      complaints.filter((c) => {
-        if (!c.location) return false;
-        const dist = haversineKm(lat, lng, c.location.lat, c.location.lng);
-        return dist <= radiusKm;
-      }),
+      complaints
+        .filter((c) => {
+          if (!c.location) return false;
+          const dist = haversineKm(lat, lng, c.location.lat, c.location.lng);
+          return dist <= radiusKm;
+        })
+        .map(normalizeComplaint),
     add: (complaint) => {
       complaints.unshift(complaint);
       myComplaintIds.add(complaint._id);
@@ -434,15 +439,20 @@ const createDemoStore = () => {
     toggleUpvote: (id, userId) => {
       const c = complaints.find((x) => x._id === id);
       if (!c) return null;
-      const idx = c.upvotedBy.indexOf(userId);
+      const idx = c.supporters.indexOf(userId);
       if (idx === -1) {
-        c.upvotedBy.push(userId);
-        c.upvotes += 1;
+        // User hasn't supported yet, add them
+        c.supporters.push(userId);
       } else {
-        c.upvotedBy.splice(idx, 1);
-        c.upvotes -= 1;
+        // User already supported, remove them (toggle)
+        c.supporters.splice(idx, 1);
       }
-      return { upvotes: c.upvotes, upvoted: idx === -1 };
+      // Return in backend-compatible format: supporters array
+      return {
+        supporters: c.supporters,
+        upvotes: c.supporters.length,
+        upvoted: idx === -1,
+      };
     },
     delete: (id) => {
       const idx = complaints.findIndex((c) => c._id === id);
@@ -459,6 +469,18 @@ const DEMO_STORE = createDemoStore();
 const delay = (ms = DEMO_DELAY_MS) => new Promise((res) => setTimeout(res, ms));
 
 const genId = () => `c_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+/**
+ * Normalizes a complaint by calculating upvotes from supporters.length.
+ * Ensures consistent response format whether from demo or backend.
+ */
+const normalizeComplaint = (complaint) => {
+  if (!complaint) return complaint;
+  return {
+    ...complaint,
+    upvotes: complaint.supporters ? complaint.supporters.length : 0,
+  };
+};
 
 /** Haversine great-circle distance in km */
 function haversineKm(lat1, lng1, lat2, lng2) {
@@ -634,9 +656,12 @@ export const toggleUpvote = async (complaintId, userId = "user_demo") => {
     return result;
   }
 
+  // Backend endpoint returns { supporters: array, message: string }
   const response = await api.post(`/complaints/${complaintId}/support`);
+  const supporterCount = response.data.supporters ? response.data.supporters.length : 0;
   return {
-    upvotes: response.data.supporters ?? 0,
+    supporters: response.data.supporters,
+    upvotes: supporterCount,
     upvoted: true,
   };
 };
