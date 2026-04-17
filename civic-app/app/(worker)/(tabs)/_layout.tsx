@@ -1,21 +1,45 @@
-import { Tabs } from "expo-router";
+import { Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Platform } from "react-native";
+import { TouchableOpacity } from "react-native";
+import { useRouter } from "expo-router";
 
-export default function TabLayout() {
+export default function WorkerLayout() {
+  const router = useRouter();
+
   return (
-    <Tabs
-      initialRouteName="dashboard"
+    <Stack
       screenOptions={{
-        headerShown: false,
-        tabBarStyle: { display: "none" }, // 👈 hide tab bar completely
+        headerShown: true,
       }}
     >
-      <Tabs.Screen name="dashboard" options={{ title: "Dashboard" }} />
-      <Tabs.Screen name="all-tasks" options={{ href: null }} />
-      <Tabs.Screen name="my-tasks" options={{ href: null }} />
-      <Tabs.Screen name="incomplete-tasks" options={{ href: null }} />
-      <Tabs.Screen name="profile" options={{ href: null }} />
-    </Tabs>
+      {/* DASHBOARD */}
+      <Stack.Screen
+        name="dashboard"
+        options={{
+          title: "Dashboard",
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => router.push("/(worker)/(tabs)/profile")}
+              style={{ marginRight: 16 }}
+            >
+              <Ionicons
+                name="person-circle-outline"
+                size={28}
+                color="#2563eb"
+              />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+
+      {/* OTHER SCREENS */}
+      <Stack.Screen name="all-tasks" options={{ title: "All Tasks" }} />
+      <Stack.Screen name="my-tasks" options={{ title: "My Tasks" }} />
+      <Stack.Screen
+        name="incomplete-tasks"
+        options={{ title: "Incomplete Tasks" }}
+      />
+      <Stack.Screen name="profile" options={{ title: "Profile" }} />
+    </Stack>
   );
 }
