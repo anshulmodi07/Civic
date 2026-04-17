@@ -18,6 +18,7 @@ export type Task = {
   reportedAt: string;
 
   status: string;
+  shift?: "morning" | "evening" | "night" | "off";
 
   assignedAt?: string;
   acceptedAt?: string;
