@@ -31,7 +31,6 @@ export type Task = {
   startedAt?: string;
   completedAt?: string;
 
-  // optional worker-side fields
   note?: string;
   completedImage?: string;
 };
