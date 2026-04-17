@@ -17,7 +17,13 @@ export type Task = {
   image?: string;
   reportedAt: string;
 
-  status: string;
+  status:
+    | "pending"
+    | "accepted"
+    | "in-progress"
+    | "completed"
+    | "incomplete";
+
   shift?: "morning" | "evening" | "night" | "off";
 
   assignedAt?: string;
