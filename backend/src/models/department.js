@@ -4,7 +4,7 @@ const departmentSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      enum: ["wifi", "plumber", "civil", "electrician"],
+      enum: ["wifi", "plumber", "civil", "electrician","carpenter"],
       required: true,
       unique: true,
     },

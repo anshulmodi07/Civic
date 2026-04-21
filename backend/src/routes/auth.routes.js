@@ -1,9 +1,19 @@
 import express from "express";
-import { signup,login} from "../controllers/auth.controller.js";
+import {
+  loginWorker,
+  loginAdmin,
+  googleLogin
+} from "../controllers/auth.Controller.js";
 
 const router = express.Router();
 
-router.post("/signup", signup);
-router.post("/login", login);
+// 👷 Worker login
+router.post("/worker/login", loginWorker);
+
+// 🧑‍💼 Admin login
+router.post("/admin/login", loginAdmin);
+
+// 👤 User (Google login)
+router.post("/google-login", googleLogin);
 
 export default router;

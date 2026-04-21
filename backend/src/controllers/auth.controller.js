@@ -1,31 +1,40 @@
-import User from "../models/User.js";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import Worker from "../models/worker.js";
+import Admin from "../models/admin.js";
+import User from "../models/user.js";
 
-export const signup = async (req, res) => {
+import bcrypt from "bcrypt";
+import { OAuth2Client } from "google-auth-library";
+import { generateToken } from "../utils/jwt.js";
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+
+// 🔥 WORKER LOGIN
+export const loginWorker = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { email, password } = req.body;
 
-    // check if user exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+    const worker = await Worker.findOne({ email });
+
+    if (!worker) {
+      return res.status(400).json({ message: "Worker not found" });
     }
 
-    // hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const isMatch = await bcrypt.compare(password, worker.password);
 
-    // create user
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role,
-    });
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
-    res.status(201).json({
-      message: "User created",
-      user,
+    const token = generateToken(worker._id, "worker");
+
+    res.json({
+      token,
+      worker: {
+        id: worker._id,
+        name: worker.name,
+        email: worker.email,
+      },
     });
 
   } catch (error) {
@@ -33,36 +42,79 @@ export const signup = async (req, res) => {
   }
 };
 
-export const login = async (req, res) => {
+
+// 🔥 ADMIN LOGIN
+export const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // check user exists
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: "User not found" });
+    const admin = await Admin.findOne({ email });
+
+    if (!admin) {
+      return res.status(400).json({ message: "Admin not found" });
     }
 
-    // check password
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, admin.password);
+
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // create token
-    const token = jwt.sign(
-      { id: user._id, role: user.role },//payload
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+    const token = generateToken(admin._id, "admin");
 
     res.json({
-      message: "Login successful",
       token,
-      user,
+      admin: {
+        id: admin._id,
+        name: admin.name,
+        email: admin.email,
+      },
     });
 
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+
+// 🔥 GOOGLE LOGIN (USER)
+export const googleLogin = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    // 1. Verify Google token
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name } = payload;
+
+    // 2. Domain restriction
+    if (!email.endsWith("@nitdelhi.ac.in")) {
+      return res.status(403).json({
+        message: "Only NIT Delhi users allowed",
+      });
+    }
+
+    // 3. Find or create user
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.create({ email, name });
+    }
+
+    // 4. Generate JWT
+    const jwtToken = generateToken(user._id, "user");
+
+    res.json({
+      token: jwtToken,
+      user,
+    });
+
+  } catch (error) {
+    console.error(error); //
+    res.status(401).json({ message: "Google auth failed" });
   }
 };

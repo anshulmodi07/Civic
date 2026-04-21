@@ -1,5 +1,5 @@
 const roleMiddleware = (...allowedRoles) => {
-  return (req, res, next) => {   // ✅ MUST HAVE next
+  return (req, res, next) => {
     try {
       const userRole = req.user.role;
 
@@ -9,7 +9,7 @@ const roleMiddleware = (...allowedRoles) => {
         });
       }
 
-      next(); // ✅ now works
+      next();
 
     } catch (error) {
       res.status(500).json({ message: error.message });
