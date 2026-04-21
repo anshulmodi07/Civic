@@ -6,7 +6,7 @@ const taskSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Complaint",
       required: true,
-      unique: true, //  prevents duplicate tasks
+      unique: true,
     },
 
     workerId: {
@@ -18,12 +18,12 @@ const taskSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["assigned", "accepted", "in-progress", "completed"],
-      default: "assigned",
+      enum: ["accepted", "in-progress", "completed", "incompleted"],
+      default: "accepted",
       index: true,
     },
 
-    acceptedAt: Date,
+    acceptedAt: { type: Date, default: Date.now },
     startedAt: Date,
     completedAt: Date,
 
