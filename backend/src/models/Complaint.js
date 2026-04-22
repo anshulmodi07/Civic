@@ -107,7 +107,8 @@ const complaintSchema = new mongoose.Schema(
 
 complaintSchema.index({ coordinates: "2dsphere" });
 
-complaintSchema.pre("validate", function (next) {
+
+complaintSchema.pre("validate", function () {
   if (this.type === "campus") {
     this.visibility = "public";
   }
@@ -118,8 +119,6 @@ complaintSchema.pre("validate", function (next) {
       coordinates: [this.location.lng, this.location.lat],
     };
   }
-
-  next();
 });
 
 export default mongoose.model("Complaint", complaintSchema);

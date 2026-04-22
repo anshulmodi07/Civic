@@ -6,7 +6,7 @@ const taskSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Complaint",
       required: true,
-      unique: true,
+      unique: true, // one task per complaint
     },
 
     workerId: {
@@ -23,12 +23,50 @@ const taskSchema = new mongoose.Schema(
       index: true,
     },
 
-    acceptedAt: { type: Date, default: Date.now },
+    // 🔹 lifecycle timestamps
+    acceptedAt: {
+      type: Date,
+      default: Date.now,
+    },
+
     startedAt: Date,
+
     completedAt: Date,
 
+    incompletedAt: Date, // 🔥 NEW (important)
+
+    // 🔹 proof + notes
     proofImages: [String],
+
     notes: String,
+
+    // 🔥 FULL HISTORY (timeline tracking)
+    history: [
+      {
+        status: {
+          type: String,
+          enum: [
+            "accepted",
+            "in-progress",
+            "completed",
+            "incompleted",
+            "reopened",
+          ],
+        },
+
+        changedAt: {
+          type: Date,
+          default: Date.now,
+        },
+
+        changedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Worker",
+        },
+
+        note: String,
+      },
+    ],
   },
   { timestamps: true }
 );

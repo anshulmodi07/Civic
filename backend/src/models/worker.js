@@ -13,6 +13,7 @@ const workerSchema = new mongoose.Schema(
 
     password: { type: String, required: true },
 
+    // 🔥 ADD THIS BACK
     departmentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Department",
@@ -26,11 +27,8 @@ const workerSchema = new mongoose.Schema(
     totalTasks: { type: Number, default: 0 },
     remainingTasks: { type: Number, default: 0 },
 
-    currentShift: {
-      type: String,
-      enum: ["morning", "evening", "night", "off"],
-      default: "off",
-    },
+    // ❌ REMOVE THIS (we discussed)
+    // currentShift: { ... }
   },
   { timestamps: true }
 );
