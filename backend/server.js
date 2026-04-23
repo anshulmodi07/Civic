@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./src/config/db.js";
 import authRoutes from "./src/routes/auth.routes.js";
-import authMiddleware from "./src/middleware/auth.middleware.js";
+import { protect } from "./src/middleware/auth.middleware.js";
 import roleMiddleware from "./src/middleware/role.middleware.js";
 import complaintRoutes from "./src/routes/complaint.routes.js";
 
@@ -25,7 +25,7 @@ app.get("/", (req, res) => {
   res.send("API running 🚀");
 });
 app.use("/auth", authRoutes);
-app.use("/api/complaints", complaintRoutes);
+app.use("/api/complaints", protect, complaintRoutes);
 
 // server start
 const PORT = process.env.PORT || 3000;
