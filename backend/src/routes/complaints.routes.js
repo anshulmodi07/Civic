@@ -6,6 +6,8 @@ import {
   getAllComplaints,
   getMyComplaints,
   getComplaintById,
+  updateComplaintService,
+  deleteComplaintService,
 } from "../controllers/complaint.controller.js";
 
 import { protect } from "../middleware/auth.middleware.js";
