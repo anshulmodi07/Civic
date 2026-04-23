@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getMe, login as loginAPI } from "../api/auth.api";
+import { getMe, googleLogin, workerLogin } from "../api/auth.api";
 
 export const AuthContext = createContext();
 
@@ -8,18 +8,16 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔄 Restore session on app start
+  // 🔄 Restore session
   useEffect(() => {
-    const restoreSession = async () => {
+    const restore = async () => {
       try {
         const token = await AsyncStorage.getItem("token");
-
         if (token) {
           const userData = await getMe();
           setUser(userData);
         }
       } catch (err) {
-        console.log("Session restore failed:", err.message);
         await AsyncStorage.removeItem("token");
         setUser(null);
       } finally {
@@ -27,24 +25,27 @@ export const AuthProvider = ({ children }) => {
       }
     };
 
-    restoreSession();
+    restore();
   }, []);
 
-  // 🔐 LOGIN
-  const login = async ({ email, name, role, password }) => {
-    try {
-      const response = await loginAPI({ email, name, role, password });
+  // 🔐 LOGIN HANDLER
+  const login = async (data) => {
+    let response;
 
-      const token = response.token;
-
-      await AsyncStorage.setItem("token", token);
-
-      const userData = await getMe();
-      setUser(userData);
-    } catch (error) {
-      console.log("Login error:", error.response?.data || error.message);
-      throw error;
+    if (data.method === "google") {
+      response = await googleLogin(data.token);
+    } else if (data.method === "worker") {
+      response = await workerLogin({
+        email: data.email,
+        password: data.password,
+      });
     }
+
+    const token = response.token;
+    await AsyncStorage.setItem("token", token);
+
+    const userData = await getMe();
+    setUser(userData);
   };
 
   // 🚪 LOGOUT
@@ -53,18 +54,14 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  // 🧠 ROLE HELPERS
-  const isWorker = user?.role === "worker";
-  const isClient = user?.role === "client";
-
   return (
     <AuthContext.Provider
       value={{
         user,
         loading,
         isAuthenticated: !!user,
-        isWorker,
-        isClient,
+        isWorker: user?.role === "worker",
+        isUser: user?.role === "user",
         login,
         logout,
       }}

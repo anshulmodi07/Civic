@@ -12,8 +12,9 @@ import "./src/models/complaint.js";
 import "./src/models/shift.js";
 
 import authRoutes from "./src/routes/auth.routes.js";
-import taskRoutes from "./src/routes/task.routes.js";
-import workerRoutes from "./src/routes/worker.routes.js";
+import authMiddleware from "./src/middleware/auth.middleware.js";
+import roleMiddleware from "./src/middleware/role.middleware.js";
+
 
 dotenv.config();
 
@@ -27,12 +28,9 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("API running 🚀");
 });
+app.use("/auth", authRoutes);
 
-// 🔥 ROUTES
-app.use("/api/auth", authRoutes);   // <-- fix also here (see below)
-app.use("/api/tasks", taskRoutes);
-app.use("/api/workers", workerRoutes);
-
+// server start
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {

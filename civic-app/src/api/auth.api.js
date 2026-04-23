@@ -1,36 +1,94 @@
 import api from "./axios";
 import { USE_DEMO_API } from "./config";
-import { login as demoLogin, getMe as demoGetMe, logoutUser as demoLogout } from "./demoAuth.api";
+import {
+  login as demoLogin,
+  getMe as demoGetMe,
+  logoutUser as demoLogout,
+} from "./demoAuth.api";
 
-const normalizeRole = (role) => (role === "client" ? "citizen" : role);
+/* ---------------- HELPER ---------------- */
+
+const handleError = (error, label) => {
+  const message =
+    error?.response?.data?.message ||
+    error?.message ||
+    "Something went wrong";
+
+  console.log(`${label} ERROR:`, message);
+  throw new Error(message);
+};
+
+/* ---------------- AUTH APIs ---------------- */
 
 /**
- * Unified login for BOTH roles (worker + client)
- * Backend decides role based on input
+ * USER LOGIN (Google OAuth)
  */
-export const login = async ({ email, name, role, password }) => {
-  const normalizedRole = normalizeRole(role);
-
+export const googleLogin = async (token) => {
   if (USE_DEMO_API) {
-    return demoLogin({ email, name, role: normalizedRole, password });
+    // simulate google login via demo
+    return demoLogin({
+      email: "demo@civicmitra.com",
+      role: "citizen",
+      password: "demo1234",
+    });
   }
 
   try {
-    const res = await api.post("/auth/login", {
-      email,
-      name,
-      role: normalizedRole,
-    });
-
-    return res.data; // expected: { token, user }
+    const res = await api.post("/auth/google-login", { token });
+    return res.data;
   } catch (error) {
-    console.log("Login API error:", error.response?.data || error.message);
-    throw error;
+    handleError(error, "GOOGLE LOGIN");
   }
 };
 
 /**
- * Get current logged-in user
+ * WORKER LOGIN
+ */
+export const workerLogin = async ({ email, password }) => {
+  if (USE_DEMO_API) {
+    return demoLogin({
+      email,
+      role: "worker",
+      password,
+    });
+  }
+
+  try {
+    const res = await api.post("/auth/worker/login", {
+      email,
+      password,
+    });
+    return res.data;
+  } catch (error) {
+    handleError(error, "WORKER LOGIN");
+  }
+};
+
+/**
+ * ADMIN LOGIN (future use)
+ */
+export const adminLogin = async ({ email, password }) => {
+  if (USE_DEMO_API) {
+    return demoLogin({
+      email,
+      role: "admin",
+      password,
+    });
+  }
+
+  try {
+    const res = await api.post("/auth/admin/login", {
+      email,
+      password,
+    });
+    return res.data;
+  } catch (error) {
+    handleError(error, "ADMIN LOGIN");
+  }
+};
+
+/**
+ * GET CURRENT USER
  */
 export const getMe = async () => {
   if (USE_DEMO_API) {
@@ -39,15 +97,14 @@ export const getMe = async () => {
 
   try {
     const res = await api.get("/auth/me");
-    return res.data; // expected: { id, role, ... }
+    return res.data;
   } catch (error) {
-    console.log("GetMe API error:", error.response?.data || error.message);
-    throw error;
+    handleError(error, "GET ME");
   }
 };
 
 /**
- * Optional: Logout API (only if backend supports it)
+ * LOGOUT
  */
 export const logoutUser = async () => {
   if (USE_DEMO_API) {
@@ -58,7 +115,6 @@ export const logoutUser = async () => {
     const res = await api.post("/auth/logout");
     return res.data;
   } catch (error) {
-    console.log("Logout API error:", error.response?.data || error.message);
-    throw error;
+    handleError(error, "LOGOUT");
   }
 };
