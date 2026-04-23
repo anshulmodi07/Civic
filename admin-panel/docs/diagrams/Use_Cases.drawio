@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-04-15" version="20.0" type="device">
+  <diagram id="Use_Cases" name="Use Cases">
+    <mxGraphModel dx="1200" dy="800" grid="1">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="Use Case Diagram - Admin Panel" style="text;html=1;align=center;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="10" width="700" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="actor" value="Admin User&#xa;(Department Manager)" style="shape=umlActor;html=1;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="50" y="100" width="50" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="system" value="Admin Panel System" style="rounded=1;html=1;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="80" width="500" height="420" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc1" value="UC-001&#xa;Authenticate User" style="ellipse;html=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="120" width="100" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc2" value="UC-002&#xa;View Dashboard" style="ellipse;html=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="120" width="100" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc3" value="UC-003&#xa;Manage Complaints" style="ellipse;html=1;" vertex="1" parent="1">
+          <mxGeometry x="550" y="120" width="100" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc4" value="UC-004&#xa;Manage Workers" style="ellipse;html=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="260" width="100" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc5" value="UC-005&#xa;Schedule Shifts" style="ellipse;html=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="260" width="100" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc6" value="UC-006&#xa;Manage Profile" style="ellipse;html=1;" vertex="1" parent="1">
+          <mxGeometry x="550" y="260" width="100" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel1" edge="1" parent="1" source="actor" target="uc1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel2" edge="1" parent="1" source="actor" target="uc2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel3" edge="1" parent="1" source="actor" target="uc3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel4" edge="1" parent="1" source="actor" target="uc4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel5" edge="1" parent="1" source="actor" target="uc5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel6" edge="1" parent="1" source="actor" target="uc6">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="inc1" value="&lt;&lt;include&gt;&gt;" edge="1" parent="1" source="uc2" target="uc1" style="dashed=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="inc2" value="&lt;&lt;include&gt;&gt;" edge="1" parent="1" source="uc3" target="uc1" style="dashed=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="inc3" value="&lt;&lt;include&gt;&gt;" edge="1" parent="1" source="uc4" target="uc1" style="dashed=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-04-15" agent="Apache-Tomcat" etag="abc123" version="20.0" type="device">
+  <diagram id="ER_Model_CivicAdminPanel" name="ER Model">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="entity1" value="DEPARTMENT&#xa;&#xa;PK: dept_id&#xa;  dept_name&#xa;  description&#xa;  contact_email&#xa;  head_name" style="html=1;rounded=0;whiteSpace=wrap;fillColor=#ffe6e6;strokeColor=#ff0000;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="50" y="50" width="150" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="entity2" value="USER&#xa;&#xa;PK: user_id&#xa;FK: dept_id&#xa;  email*&#xa;  password_hash&#xa;  first_name&#xa;  last_name&#xa;  role" style="html=1;rounded=0;whiteSpace=wrap;fillColor=#e6f3ff;strokeColor=#0000ff;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="280" y="50" width="150" height="140" as="geometry"/>
+        </mxCell>
+        <mxCell id="entity3" value="COMPLAINT&#xa;&#xa;PK: complaint_id&#xa;FK: dept_id&#xa;FK: assigned_worker_id&#xa;FK: created_by_user_id&#xa;  title, description&#xa;  location&#xa;  status (enum)" style="html=1;rounded=0;whiteSpace=wrap;fillColor=#e6ffe6;strokeColor=#00aa00;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="50" y="250" width="180" height="160" as="geometry"/>
+        </mxCell>
+        <mxCell id="entity4" value="WORKER&#xa;&#xa;PK: worker_id&#xa;FK: dept_id&#xa;  first_name, last_name&#xa;  email, phone&#xa;  online_status&#xa;  current_shift&#xa;  rating, tasks_completed" style="html=1;rounded=0;whiteSpace=wrap;fillColor=#fff9e6;strokeColor=#ffaa00;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="280" y="250" width="170" height="160" as="geometry"/>
+        </mxCell>
+        <mxCell id="entity5" value="SHIFT&#xa;&#xa;PK: shift_id&#xa;FK: worker_id&#xa;FK: dept_id&#xa;FK: created_by_user_id&#xa;  shift_date&#xa;  shift_type (enum)&#xa;  start_time, end_time" style="html=1;rounded=0;whiteSpace=wrap;fillColor=#f0e6ff;strokeColor=#aa00aa;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="510" y="250" width="160" height="160" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel1" value="1:N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERoneToMany;endArrow=none;" edge="1" parent="1" source="entity1" target="entity2">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="125" y="170" as="sourcePoint"/>
+            <mxPoint x="280" y="120" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel2" value="1:N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERoneToMany;endArrow=none;" edge="1" parent="1" source="entity1" target="entity3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel3" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;endArrow=ERmandMany;" edge="1" parent="1" source="entity3" target="entity4">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="230" y="330" as="sourcePoint"/>
+            <mxPoint x="280" y="330" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel4" value="1:N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERoneToMany;endArrow=none;" edge="1" parent="1" source="entity4" target="entity5">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="330" as="sourcePoint"/>
+            <mxPoint x="510" y="330" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel5" value="1:N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERoneToMany;endArrow=none;" edge="1" parent="1" source="entity1" target="entity5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend" value="* = Unique Key&#xa;PK = Primary Key&#xa;FK = Foreign Key&#xa;1:N = One-to-Many&#xa;N:1 = Many-to-One" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="50" y="480" width="200" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="note" value="Entity-Relationship Model for Civic Infrastructure Admin Panel" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="10" width="620" height="30" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
