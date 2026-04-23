@@ -183,7 +183,7 @@ const handleWorkerLogin = async () => {
             </TouchableOpacity>
 
             {!loginType && (
-  <View style={{ marginBottom: 20 }}>
+  <View style={{ marginBottom: 20, gap: 10 }}>
     <TouchableOpacity
       style={styles.loginButton}
       onPress={() => setLoginType("user")}
@@ -192,7 +192,7 @@ const handleWorkerLogin = async () => {
     </TouchableOpacity>
 
     <TouchableOpacity
-      style={[styles.loginButton, { marginTop: 10 }]}
+      style={[styles.loginButton, { backgroundColor: '#1e40af' }]}
       onPress={() => setLoginType("worker")}
     >
       <Text style={styles.loginButtonText}>Login as Worker</Text>
@@ -218,12 +218,16 @@ const handleWorkerLogin = async () => {
     <View style={styles.inputGroup}>
       <Text style={styles.label}>Email Address</Text>
       <View style={styles.inputWrapper}>
-        <Ionicons name="mail-outline" size={20} color="#64748b" />
+        <Ionicons name="mail-outline" size={20} color="#64748b" style={styles.inputIcon} />
         <TextInput
           value={email}
           onChangeText={setEmail}
           style={styles.input}
           placeholder="Enter your email"
+          placeholderTextColor="#94a3b8"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
         />
       </View>
     </View>
@@ -232,27 +236,35 @@ const handleWorkerLogin = async () => {
     <View style={styles.inputGroup}>
       <Text style={styles.label}>Password</Text>
       <View style={styles.inputWrapper}>
-        <Ionicons name="lock-closed-outline" size={20} color="#64748b" />
+        <Ionicons name="lock-closed-outline" size={20} color="#64748b" style={styles.inputIcon} />
         <TextInput
           value={password}
-          secureTextEntry
+          secureTextEntry={!showPassword}
           onChangeText={setPassword}
           style={styles.input}
           placeholder="Enter your password"
+          placeholderTextColor="#94a3b8"
+          autoCapitalize="none"
+          autoComplete="password"
         />
+        <TouchableOpacity
+          onPress={() => setShowPassword(!showPassword)}
+          style={styles.eyeIcon}
+        >
+          <Ionicons
+            name={showPassword ? "eye-outline" : "eye-off-outline"}
+            size={20}
+            color="#64748b"
+          />
+        </TouchableOpacity>
       </View>
     </View>
 
     {/* Login Button */}
-    <TouchableOpacity onPress={handleWorkerLogin}>
-      <LinearGradient
-        colors={['#2563eb', '#1e40af']}
-        style={styles.loginButton}
-      >
-        <Text style={styles.loginButtonText}>
-          {isLoading ? "Signing In..." : "Sign In"}
-        </Text>
-      </LinearGradient>
+    <TouchableOpacity onPress={handleWorkerLogin} disabled={isLoading} style={styles.loginButton}>
+      <Text style={styles.loginButtonText}>
+        {isLoading ? "Signing In..." : "Sign In"}
+      </Text>
     </TouchableOpacity>
   </>
 )}
@@ -441,6 +453,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#2563eb',
     ...Platform.select({
       web: {
         boxShadow: '0px 8px 24px rgba(37, 99, 235, 0.18)',
@@ -458,7 +471,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
     color: '#fff',
-    marginRight: 8,
     letterSpacing: 0.5,
   },
   divider: {
