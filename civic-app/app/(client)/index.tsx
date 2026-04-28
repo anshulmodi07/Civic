@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { AuthContext } from "@/src/context/AuthContext";
 import { getCitizenDashboard } from "@/src/api/complaint.api";
+console.log("dashboard fn:", getCitizenDashboard);
 
 export default function ClientHome() {
   const router = useRouter();

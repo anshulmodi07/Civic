@@ -49,3 +49,8 @@ export const getNearbyComplaints = async (lat, lng, radiusKm = 5) => {
     params: { lat, lng, radiusKm },
   });
 };
+
+export const getCitizenDashboard = async () => {
+  const res = await api.get("/complaints/my");
+  return res.data;
+};

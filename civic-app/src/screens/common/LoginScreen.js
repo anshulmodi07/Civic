@@ -22,8 +22,9 @@ export default function LoginScreen() {
 
   useEffect(() => {
   GoogleSignin.configure({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
-  });
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
+  offlineAccess: true,
+});
 }, []);
 
   const handleGoogleLogin = async () => {
@@ -32,7 +33,7 @@ export default function LoginScreen() {
 
     await GoogleSignin.hasPlayServices();
     const userInfo = await GoogleSignin.signIn();
-
+    console.log("Google Sign-In Info:", userInfo);
    if (!userInfo.idToken) {
   throw new Error("Google ID token not found");
   }
@@ -41,6 +42,8 @@ export default function LoginScreen() {
       method: "google",
       token: userInfo.idToken,
     });
+
+    
 
   } catch (err) {
     Alert.alert("Login Failed", err.message || "Google login failed");
