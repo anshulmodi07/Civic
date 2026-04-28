@@ -14,6 +14,8 @@ import "./src/models/shift.js";
 import authRoutes from "./src/routes/auth.routes.js";
 import { protect } from "./src/middleware/auth.middleware.js";
 import roleMiddleware from "./src/middleware/role.middleware.js";
+import complaintRoutes from "./src/routes/complaint.routes.js";
+
 
 
 dotenv.config();
@@ -29,7 +31,6 @@ app.get("/", (req, res) => {
   res.send("API running 🚀");
 });
 app.use("/auth", authRoutes);
-app.use("/api/complaints", complaintRoutes);
 
 // server start
 const PORT = process.env.PORT || 3000;

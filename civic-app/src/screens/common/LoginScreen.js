@@ -1,10 +1,12 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert, StatusBar } from "react-native";
 import { useContext, useState, useEffect } from "react";
+import { useContext, useState, useEffect } from "react";
 import { useRouter } from "expo-router";
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { ScrollView } from "react-native";
 import { AuthContext } from "@/src/context/AuthContext";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 const DEMO_CLIENT_EMAIL = "demo@civicmitra.com";
@@ -27,6 +29,8 @@ export default function LoginScreen() {
 });
 }, []);
 
+  const handleGoogleLogin = async () => {
+  try {
   const handleGoogleLogin = async () => {
   try {
     setIsLoading(true);
@@ -88,6 +92,19 @@ const handleWorkerLogin = async () => {
   setEmail(demoEmail);
   setPassword(DEMO_PASSWORD);
 };
+  if (!loginType) {
+    Alert.alert("Please select login type first");
+    return;
+  }
+
+  const demoEmail =
+    loginType === "worker"
+      ? DEMO_WORKER_EMAIL
+      : DEMO_CLIENT_EMAIL;
+
+  setEmail(demoEmail);
+  setPassword(DEMO_PASSWORD);
+};
 
   return (
     <View style={styles.container}>
@@ -131,6 +148,7 @@ const handleWorkerLogin = async () => {
 
             {/* Email Input */}
             {/* <View style={styles.inputGroup}>
+            {/* <View style={styles.inputGroup}>
               <Text style={styles.label}>Email Address</Text>
               <View style={styles.inputWrapper}>
                 <Ionicons name="mail-outline" size={20} color="#64748b" style={styles.inputIcon} />
@@ -146,8 +164,10 @@ const handleWorkerLogin = async () => {
                 />
               </View>
             </View> */}
+            </View> */}
 
             {/* Password Input */}
+            {/* <View style={styles.inputGroup}>
             {/* <View style={styles.inputGroup}>
               <Text style={styles.label}>Password</Text>
               <View style={styles.inputWrapper}>
@@ -173,6 +193,7 @@ const handleWorkerLogin = async () => {
                   />
                 </TouchableOpacity>
               </View>
+            </View> */}
             </View> */}
 
             {/* Demo Badge */}
@@ -204,11 +225,35 @@ const handleWorkerLogin = async () => {
 )}
 
 {loginType === "user" && (
+            {!loginType && (
+  <View style={{ marginBottom: 20, gap: 10 }}>
+    <TouchableOpacity
+      style={styles.loginButton}
+      onPress={() => setLoginType("user")}
+    >
+      <Text style={styles.loginButtonText}>Login as User</Text>
+    </TouchableOpacity>
+
+    <TouchableOpacity
+      style={[styles.loginButton, { backgroundColor: '#1e40af' }]}
+      onPress={() => setLoginType("worker")}
+    >
+      <Text style={styles.loginButtonText}>Login as Worker</Text>
+    </TouchableOpacity>
+  </View>
+)}
+
+{loginType === "user" && (
   <TouchableOpacity
     onPress={handleGoogleLogin}
     style={styles.loginButton}
     disabled={isLoading}
+    onPress={handleGoogleLogin}
+    style={styles.loginButton}
+    disabled={isLoading}
   >
+    <Text style={styles.loginButtonText}>
+      {isLoading ? "Please wait..." : "Continue with Google"}
     <Text style={styles.loginButtonText}>
       {isLoading ? "Please wait..." : "Continue with Google"}
     </Text>
@@ -273,14 +318,83 @@ const handleWorkerLogin = async () => {
 )}
 
 {loginType && (
+)}
+
+{loginType === "worker" && (
+  <>
+    {/* Email Input */}
+    <View style={styles.inputGroup}>
+      <Text style={styles.label}>Email Address</Text>
+      <View style={styles.inputWrapper}>
+        <Ionicons name="mail-outline" size={20} color="#64748b" style={styles.inputIcon} />
+        <TextInput
+          value={email}
+          onChangeText={setEmail}
+          style={styles.input}
+          placeholder="Enter your email"
+          placeholderTextColor="#94a3b8"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+        />
+      </View>
+    </View>
+
+    {/* Password Input */}
+    <View style={styles.inputGroup}>
+      <Text style={styles.label}>Password</Text>
+      <View style={styles.inputWrapper}>
+        <Ionicons name="lock-closed-outline" size={20} color="#64748b" style={styles.inputIcon} />
+        <TextInput
+          value={password}
+          secureTextEntry={!showPassword}
+          onChangeText={setPassword}
+          style={styles.input}
+          placeholder="Enter your password"
+          placeholderTextColor="#94a3b8"
+          autoCapitalize="none"
+          autoComplete="password"
+        />
+        <TouchableOpacity
+          onPress={() => setShowPassword(!showPassword)}
+          style={styles.eyeIcon}
+        >
+          <Ionicons
+            name={showPassword ? "eye-outline" : "eye-off-outline"}
+            size={20}
+            color="#64748b"
+          />
+        </TouchableOpacity>
+      </View>
+    </View>
+
+    {/* Login Button */}
+    <TouchableOpacity onPress={handleWorkerLogin} disabled={isLoading} style={styles.loginButton}>
+      <Text style={styles.loginButtonText}>
+        {isLoading ? "Signing In..." : "Sign In"}
+      </Text>
+    </TouchableOpacity>
+  </>
+)}
+
+{loginType && (
   <TouchableOpacity
+    onPress={() => setLoginType(null)}
+    style={{ marginTop: 10 }}
     onPress={() => setLoginType(null)}
     style={{ marginTop: 10 }}
   >
     <Text style={{ textAlign: "center", color: "#2563eb" }}>
       ← Change Login Type
+    <Text style={{ textAlign: "center", color: "#2563eb" }}>
+      ← Change Login Type
     </Text>
   </TouchableOpacity>
+)}
+
+            
+
+            {/* Divider
 )}
 
             
@@ -291,7 +405,9 @@ const handleWorkerLogin = async () => {
               <Text style={styles.dividerText}>Don't have an account?</Text>
               <View style={styles.dividerLine} />
             </View> */}
+            </View> */}
 
+            {/* <TouchableOpacity
             {/* <TouchableOpacity
               style={styles.registerButton}
               onPress={() => router.push("/(auth)/register")}
@@ -300,10 +416,12 @@ const handleWorkerLogin = async () => {
               <Ionicons name="person-add-outline" size={20} color="#2563eb" />
               <Text style={styles.registerButtonText}>Create New Account</Text>
             </TouchableOpacity> */}
+            </TouchableOpacity> */}
 
             {/* Footer Info */}
             <View style={styles.footer}>
               <Ionicons name="information-circle-outline" size={16} color="#64748b" />
+              <Text style={styles.footerText}>Official College Portal - Secure Login</Text>
               <Text style={styles.footerText}>Official College Portal - Secure Login</Text>
             </View>
           </View>
@@ -456,6 +574,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#2563eb',
     backgroundColor: '#2563eb',
     ...Platform.select({
       web: {

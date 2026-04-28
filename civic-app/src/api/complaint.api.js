@@ -14,16 +14,39 @@ export const createComplaint = async (data) => {
 
 export const getAllComplaints = async (filters = {}) => {
   return api.get("/complaints", { params: filters });
+
+/* =========================
+   CREATE
+========================= */
+
+export const createComplaint = async (data) => {
+  return api.post("/complaints", data);
+};
+
+/* =========================
+   READ
+========================= */
+
+export const getAllComplaints = async (filters = {}) => {
+  return api.get("/complaints", { params: filters });
 };
 
 export const getMyComplaints = async () => {
+  return api.get("/complaints/my");
   return api.get("/complaints/my");
 };
 
 export const getComplaintById = async (id) => {
   return api.get(`/complaints/${id}`);
+  return api.get(`/complaints/${id}`);
 };
 
+/* =========================
+   UPDATE
+========================= */
+
+export const updateComplaint = async (id, data) => {
+  return api.put(`/complaints/${id}`, data);
 /* =========================
    UPDATE
 ========================= */
@@ -36,7 +59,12 @@ export const updateComplaint = async (id, data) => {
    DELETE
 ========================= */
 
+/* =========================
+   DELETE
+========================= */
+
 export const deleteComplaint = async (id) => {
+  return api.delete(`/complaints/${id}`);
   return api.delete(`/complaints/${id}`);
 };
 
