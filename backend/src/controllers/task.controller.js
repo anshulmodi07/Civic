@@ -1,5 +1,5 @@
-import Complaint from "../models/complaint.js";
-import Task from "../models/task.js";
+import Complaint from "../models/Complaint.js";
+import Task from "../models/Task.js";
 import Worker from "../models/worker.js";
 
 export const getTaskById = async (req, res) => {
@@ -101,9 +101,7 @@ export const acceptTask = async (req, res) => {
       ],
     });
 
-    // assign worker
-    complaint.assignedWorkerId = workerId;
-    await complaint.save();
+    // Note: complaint schema does not store assigned worker; Task is the source of truth.
 
     res.json(task);
 
@@ -243,7 +241,6 @@ export const markIncomplete = async (req, res) => {
 
     if (complaint) {
       complaint.status = "pending"; // 🔥 IMPORTANT FIX
-      complaint.assignedWorkerId = null;
       await complaint.save();
     }
 

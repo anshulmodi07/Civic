@@ -10,7 +10,7 @@ import {
   getTaskById   // ✅ ADD THIS
 } from "../controllers/task.controller.js";
 
-import authMiddleware from "../middleware/auth.middleware.js";
+import { protect } from "../middleware/auth.middleware.js";
 import roleMiddleware from "../middleware/role.middleware.js";
 
 const router = express.Router();
@@ -19,21 +19,21 @@ const router = express.Router();
 
 router.get(
   "/available",
-  authMiddleware,
+  protect,
   roleMiddleware("worker"),
   getAvailableTasks
 );
 
 router.get(
   "/my",
-  authMiddleware,
+  protect,
   roleMiddleware("worker"),
   getMyTasks
 );
 
 router.get(
   "/:taskId",
-  authMiddleware,
+  protect,
   roleMiddleware("worker"),
   getTaskById
 );
@@ -41,7 +41,7 @@ router.get(
 
 router.post(
   "/:complaintId/accept",
-  authMiddleware,
+  protect,
   roleMiddleware("worker"),
   acceptTask
 );
@@ -50,7 +50,7 @@ router.post(
 
 router.post(
   "/:taskId/start",
-  authMiddleware,
+  protect,
   roleMiddleware("worker"),
   startTask
 );
@@ -59,21 +59,21 @@ router.post(
 
 router.post(
   "/:taskId/complete",
-  authMiddleware,
+  protect,
   roleMiddleware("worker"),
   completeTask
 );
 
 router.post(
   "/:taskId/incomplete",
-  authMiddleware,
+  protect,
   roleMiddleware("worker"),
   markIncomplete
 );
 
 router.post(
   "/:taskId/revive",
-  authMiddleware,
+  protect,
   roleMiddleware("worker"),
   reviveTask
 );

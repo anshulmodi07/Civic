@@ -1,11 +1,9 @@
-// UI only — maps to Department collection dynamically
 export const ISSUE_TYPES = [
-  { label: "Electrician",  value: "electrician" },
-  { label: "AC / HVAC",    value: "ac" },
-  { label: "Plumber",      value: "plumber" },
-  { label: "Construction", value: "construction" },
-  { label: "Sanitation",   value: "sanitation" },
-  { label: "WiFi / IT",    value: "wifi" },
+  { label: "WiFi / IT", value: "wifi" },
+  { label: "Plumber", value: "plumber" },
+  { label: "Civil", value: "civil" },
+  { label: "Electrician", value: "electrician" },
+  { label: "Carpenter", value: "carpenter" },
 ];
 
 export const COMPLAINT_TYPES = [

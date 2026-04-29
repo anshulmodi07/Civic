@@ -1,12 +1,20 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert, StatusBar } from "react-native";
-import { useContext, useState, useEffect } from "react";
-import { useContext, useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+  StatusBar,
+  ScrollView,
+} from "react-native";
+import { useContext, useEffect, useState } from "react";
 import { useRouter } from "expo-router";
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { ScrollView } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 import { AuthContext } from "@/src/context/AuthContext";
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 const DEMO_CLIENT_EMAIL = "demo@civicmitra.com";
@@ -23,88 +31,50 @@ export default function LoginScreen() {
   const [loginType, setLoginType] = useState(null); // "user" | "worker"
 
   useEffect(() => {
-  GoogleSignin.configure({
-  webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
-  offlineAccess: true,
-});
-}, []);
+    GoogleSignin.configure({
+      webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
+      offlineAccess: true,
+    });
+  }, []);
 
   const handleGoogleLogin = async () => {
-  try {
-  const handleGoogleLogin = async () => {
-  try {
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    await GoogleSignin.hasPlayServices();
-    const userInfo = await GoogleSignin.signIn();
-    console.log("Google Sign-In Info:", userInfo);
-   if (!userInfo.idToken) {
-  throw new Error("Google ID token not found");
-  }
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      const idToken = userInfo?.idToken;
+      if (!idToken) throw new Error("Google ID token not found");
 
-    await login({
-      method: "google",
-      token: userInfo.idToken,
-    });
+      await login({ method: "google", token: idToken });
+    } catch (err) {
+      Alert.alert("Login Failed", err?.message || "Google login failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    
-
-  } catch (err) {
-    Alert.alert("Login Failed", err.message || "Google login failed");
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-const handleWorkerLogin = async () => {
-  try {
-    setIsLoading(true);
-
-    await login({
-      method: "worker",
-      email,
-      password,
-    });
-
-  } catch (err) {
-    const message =
-      err.response?.data?.message ||
-      err.message ||
-      "Invalid credentials";
-
-    Alert.alert("Login Failed", message);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  const handleWorkerLogin = async () => {
+    try {
+      setIsLoading(true);
+      await login({ method: "worker", email, password });
+    } catch (err) {
+      const message = err?.response?.data?.message || err?.message || "Invalid credentials";
+      Alert.alert("Login Failed", message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const fillDemoCredentials = () => {
-  if (!loginType) {
-    Alert.alert("Please select login type first");
-    return;
-  }
+    if (!loginType) {
+      Alert.alert("Please select login type first");
+      return;
+    }
 
-  const demoEmail =
-    loginType === "worker"
-      ? DEMO_WORKER_EMAIL
-      : DEMO_CLIENT_EMAIL;
-
-  setEmail(demoEmail);
-  setPassword(DEMO_PASSWORD);
-};
-  if (!loginType) {
-    Alert.alert("Please select login type first");
-    return;
-  }
-
-  const demoEmail =
-    loginType === "worker"
-      ? DEMO_WORKER_EMAIL
-      : DEMO_CLIENT_EMAIL;
-
-  setEmail(demoEmail);
-  setPassword(DEMO_PASSWORD);
-};
+    setEmail(loginType === "worker" ? DEMO_WORKER_EMAIL : DEMO_CLIENT_EMAIL);
+    setPassword(DEMO_PASSWORD);
+  };
 
   return (
     <View style={styles.container}>
@@ -112,7 +82,7 @@ const handleWorkerLogin = async () => {
       
       {/* Background Gradient */}
       <LinearGradient
-        colors={['#1e3a8a', '#3b82f6', '#60a5fa']}
+        colors={["#1e3a8a", "#3b82f6", "#60a5fa"]}
         style={styles.backgroundGradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -136,299 +106,113 @@ const handleWorkerLogin = async () => {
         {/* Form Section */}
         <View style={styles.formContainer}>
           <ScrollView
-    showsVerticalScrollIndicator={false}
-    keyboardShouldPersistTaps="handled"
-    contentContainerStyle={{ paddingBottom: 40 }}
-  >
-          <View style={styles.formCard}>
-            <Text style={styles.formTitle}>Sign In</Text>
-            <Text style={styles.formSubtitle}>Access your civic dashboard</Text>
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ paddingBottom: 40 }}
+          >
+            <View style={styles.formCard}>
+              <Text style={styles.formTitle}>Sign In</Text>
+              <Text style={styles.formSubtitle}>Access your civic dashboard</Text>
 
-            {/* <Button color="blue" height = {50} title="Test Backend" onPress={testBackend} /> */}
+              <TouchableOpacity style={styles.demoBadge} onPress={fillDemoCredentials} activeOpacity={0.7}>
+                <Ionicons name="flash" size={14} color="#f59e0b" />
+                <Text style={styles.demoText}>Quick Demo: auto-fill client or worker credentials</Text>
+              </TouchableOpacity>
 
-            {/* Email Input */}
-            {/* <View style={styles.inputGroup}>
-            {/* <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email Address</Text>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="mail-outline" size={20} color="#64748b" style={styles.inputIcon} />
-                <TextInput
-                  value={email}
-                  onChangeText={setEmail}
-                  style={styles.input}
-                  placeholder="Enter your email"
-                  placeholderTextColor="#94a3b8"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                />
-              </View>
-            </View> */}
-            </View> */}
+              {!loginType && (
+                <View style={{ marginBottom: 20, gap: 10 }}>
+                  <TouchableOpacity style={styles.loginButton} onPress={() => setLoginType("user")}>
+                    <Text style={styles.loginButtonText}>Login as User</Text>
+                  </TouchableOpacity>
 
-            {/* Password Input */}
-            {/* <View style={styles.inputGroup}>
-            {/* <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="lock-closed-outline" size={20} color="#64748b" style={styles.inputIcon} />
-                <TextInput
-                  value={password}
-                  secureTextEntry={!showPassword}
-                  onChangeText={setPassword}
-                  style={styles.input}
-                  placeholder="Enter your password"
-                  placeholderTextColor="#94a3b8"
-                  autoCapitalize="none"
-                  autoComplete="password"
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeIcon}
-                >
-                  <Ionicons
-                    name={showPassword ? "eye-outline" : "eye-off-outline"}
-                    size={20}
-                    color="#64748b"
-                  />
+                  <TouchableOpacity
+                    style={[styles.loginButton, { backgroundColor: "#1e40af" }]}
+                    onPress={() => setLoginType("worker")}
+                  >
+                    <Text style={styles.loginButtonText}>Login as Worker</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {loginType === "user" && (
+                <TouchableOpacity onPress={handleGoogleLogin} style={styles.loginButton} disabled={isLoading}>
+                  <Text style={styles.loginButtonText}>{isLoading ? "Please wait..." : "Continue with Google"}</Text>
                 </TouchableOpacity>
+              )}
+
+              {loginType === "worker" && (
+                <>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Email Address</Text>
+                    <View style={styles.inputWrapper}>
+                      <Ionicons name="mail-outline" size={20} color="#64748b" style={styles.inputIcon} />
+                      <TextInput
+                        value={email}
+                        onChangeText={setEmail}
+                        style={styles.input}
+                        placeholder="Enter your email"
+                        placeholderTextColor="#94a3b8"
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoComplete="email"
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Password</Text>
+                    <View style={styles.inputWrapper}>
+                      <Ionicons name="lock-closed-outline" size={20} color="#64748b" style={styles.inputIcon} />
+                      <TextInput
+                        value={password}
+                        secureTextEntry={!showPassword}
+                        onChangeText={setPassword}
+                        style={styles.input}
+                        placeholder="Enter your password"
+                        placeholderTextColor="#94a3b8"
+                        autoCapitalize="none"
+                        autoComplete="password"
+                      />
+                      <TouchableOpacity onPress={() => setShowPassword((v) => !v)} style={styles.eyeIcon}>
+                        <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color="#64748b" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity onPress={handleWorkerLogin} disabled={isLoading} style={styles.loginButton}>
+                    <Text style={styles.loginButtonText}>{isLoading ? "Signing In..." : "Sign In"}</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+
+              {loginType && (
+                <TouchableOpacity onPress={() => setLoginType(null)} style={{ marginTop: 10 }}>
+                  <Text style={{ textAlign: "center", color: "#2563eb" }}>← Change Login Type</Text>
+                </TouchableOpacity>
+              )}
+
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>Don&apos;t have an account?</Text>
+                <View style={styles.dividerLine} />
               </View>
-            </View> */}
-            </View> */}
 
-            {/* Demo Badge */}
-            <TouchableOpacity 
-              style={styles.demoBadge}
-              onPress={fillDemoCredentials}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="flash" size={14} color="#f59e0b" />
-              <Text style={styles.demoText}>Quick Demo: auto-fill client or worker credentials</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.registerButton}
+                onPress={() => router.push("/(auth)/register")}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="person-add-outline" size={20} color="#2563eb" />
+                <Text style={styles.registerButtonText}>Create New Account</Text>
+              </TouchableOpacity>
 
-            {!loginType && (
-  <View style={{ marginBottom: 20, gap: 10 }}>
-    <TouchableOpacity
-      style={styles.loginButton}
-      onPress={() => setLoginType("user")}
-    >
-      <Text style={styles.loginButtonText}>Login as User</Text>
-    </TouchableOpacity>
-
-    <TouchableOpacity
-      style={[styles.loginButton, { backgroundColor: '#1e40af' }]}
-      onPress={() => setLoginType("worker")}
-    >
-      <Text style={styles.loginButtonText}>Login as Worker</Text>
-    </TouchableOpacity>
-  </View>
-)}
-
-{loginType === "user" && (
-            {!loginType && (
-  <View style={{ marginBottom: 20, gap: 10 }}>
-    <TouchableOpacity
-      style={styles.loginButton}
-      onPress={() => setLoginType("user")}
-    >
-      <Text style={styles.loginButtonText}>Login as User</Text>
-    </TouchableOpacity>
-
-    <TouchableOpacity
-      style={[styles.loginButton, { backgroundColor: '#1e40af' }]}
-      onPress={() => setLoginType("worker")}
-    >
-      <Text style={styles.loginButtonText}>Login as Worker</Text>
-    </TouchableOpacity>
-  </View>
-)}
-
-{loginType === "user" && (
-  <TouchableOpacity
-    onPress={handleGoogleLogin}
-    style={styles.loginButton}
-    disabled={isLoading}
-    onPress={handleGoogleLogin}
-    style={styles.loginButton}
-    disabled={isLoading}
-  >
-    <Text style={styles.loginButtonText}>
-      {isLoading ? "Please wait..." : "Continue with Google"}
-    <Text style={styles.loginButtonText}>
-      {isLoading ? "Please wait..." : "Continue with Google"}
-    </Text>
-  </TouchableOpacity>
-)}
-
-{loginType === "worker" && (
-  <>
-    {/* Email Input */}
-    <View style={styles.inputGroup}>
-      <Text style={styles.label}>Email Address</Text>
-      <View style={styles.inputWrapper}>
-        <Ionicons name="mail-outline" size={20} color="#64748b" style={styles.inputIcon} />
-        <TextInput
-          value={email}
-          onChangeText={setEmail}
-          style={styles.input}
-          placeholder="Enter your email"
-          placeholderTextColor="#94a3b8"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
-        />
-      </View>
-    </View>
-
-    {/* Password Input */}
-    <View style={styles.inputGroup}>
-      <Text style={styles.label}>Password</Text>
-      <View style={styles.inputWrapper}>
-        <Ionicons name="lock-closed-outline" size={20} color="#64748b" style={styles.inputIcon} />
-        <TextInput
-          value={password}
-          secureTextEntry={!showPassword}
-          onChangeText={setPassword}
-          style={styles.input}
-          placeholder="Enter your password"
-          placeholderTextColor="#94a3b8"
-          autoCapitalize="none"
-          autoComplete="password"
-        />
-        <TouchableOpacity
-          onPress={() => setShowPassword(!showPassword)}
-          style={styles.eyeIcon}
-        >
-          <Ionicons
-            name={showPassword ? "eye-outline" : "eye-off-outline"}
-            size={20}
-            color="#64748b"
-          />
-        </TouchableOpacity>
-      </View>
-    </View>
-
-    {/* Login Button */}
-    <TouchableOpacity onPress={handleWorkerLogin} disabled={isLoading} style={styles.loginButton}>
-      <Text style={styles.loginButtonText}>
-        {isLoading ? "Signing In..." : "Sign In"}
-      </Text>
-    </TouchableOpacity>
-  </>
-)}
-
-{loginType && (
-)}
-
-{loginType === "worker" && (
-  <>
-    {/* Email Input */}
-    <View style={styles.inputGroup}>
-      <Text style={styles.label}>Email Address</Text>
-      <View style={styles.inputWrapper}>
-        <Ionicons name="mail-outline" size={20} color="#64748b" style={styles.inputIcon} />
-        <TextInput
-          value={email}
-          onChangeText={setEmail}
-          style={styles.input}
-          placeholder="Enter your email"
-          placeholderTextColor="#94a3b8"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
-        />
-      </View>
-    </View>
-
-    {/* Password Input */}
-    <View style={styles.inputGroup}>
-      <Text style={styles.label}>Password</Text>
-      <View style={styles.inputWrapper}>
-        <Ionicons name="lock-closed-outline" size={20} color="#64748b" style={styles.inputIcon} />
-        <TextInput
-          value={password}
-          secureTextEntry={!showPassword}
-          onChangeText={setPassword}
-          style={styles.input}
-          placeholder="Enter your password"
-          placeholderTextColor="#94a3b8"
-          autoCapitalize="none"
-          autoComplete="password"
-        />
-        <TouchableOpacity
-          onPress={() => setShowPassword(!showPassword)}
-          style={styles.eyeIcon}
-        >
-          <Ionicons
-            name={showPassword ? "eye-outline" : "eye-off-outline"}
-            size={20}
-            color="#64748b"
-          />
-        </TouchableOpacity>
-      </View>
-    </View>
-
-    {/* Login Button */}
-    <TouchableOpacity onPress={handleWorkerLogin} disabled={isLoading} style={styles.loginButton}>
-      <Text style={styles.loginButtonText}>
-        {isLoading ? "Signing In..." : "Sign In"}
-      </Text>
-    </TouchableOpacity>
-  </>
-)}
-
-{loginType && (
-  <TouchableOpacity
-    onPress={() => setLoginType(null)}
-    style={{ marginTop: 10 }}
-    onPress={() => setLoginType(null)}
-    style={{ marginTop: 10 }}
-  >
-    <Text style={{ textAlign: "center", color: "#2563eb" }}>
-      ← Change Login Type
-    <Text style={{ textAlign: "center", color: "#2563eb" }}>
-      ← Change Login Type
-    </Text>
-  </TouchableOpacity>
-)}
-
-            
-
-            {/* Divider
-)}
-
-            
-
-            {/* Divider
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>Don't have an account?</Text>
-              <View style={styles.dividerLine} />
-            </View> */}
-            </View> */}
-
-            {/* <TouchableOpacity
-            {/* <TouchableOpacity
-              style={styles.registerButton}
-              onPress={() => router.push("/(auth)/register")}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="person-add-outline" size={20} color="#2563eb" />
-              <Text style={styles.registerButtonText}>Create New Account</Text>
-            </TouchableOpacity> */}
-            </TouchableOpacity> */}
-
-            {/* Footer Info */}
-            <View style={styles.footer}>
-              <Ionicons name="information-circle-outline" size={16} color="#64748b" />
-              <Text style={styles.footerText}>Official College Portal - Secure Login</Text>
-              <Text style={styles.footerText}>Official College Portal - Secure Login</Text>
+              <View style={styles.footer}>
+                <Ionicons name="information-circle-outline" size={16} color="#64748b" />
+                <Text style={styles.footerText}>Official College Portal - Secure Login</Text>
+              </View>
             </View>
-          </View>
           </ScrollView>
-
         </View>
-        
       </KeyboardAvoidingView>
     </View>
   );
@@ -574,7 +358,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#2563eb',
     backgroundColor: '#2563eb',
     ...Platform.select({
       web: {

@@ -2,59 +2,12 @@ import { View, StyleSheet, ActivityIndicator } from "react-native";
 import { useEffect, useState } from "react";
 import MapView, { Marker, Heatmap } from "react-native-maps";
 import * as Location from "expo-location";
-// import { getNearbyComplaints } from "../../api/complaint.api";
-import api from "../../api/axios";
+import { getNearbyComplaints } from "../../api/complaint.api";
 
-const MOCK_NEARBY = [
-  {
-    _id: "c001",
-    issueType: "road",
-    description: "Large pothole near the Lajpat Nagar market entry gate.",
-    status: "in-progress",
-    location: { lat: 28.5468, lng: 77.2741 },
-    supportCount: 6,
-  },
-  {
-    _id: "c002",
-    issueType: "water",
-    description: "Water supply irregular in Block C, Okhla Phase 2.",
-    status: "assigned",
-    location: { lat: 28.5412, lng: 77.2698 },
-    supportCount: 3,
-  },
-  {
-    _id: "c003",
-    issueType: "electricity",
-    description: "Street lights not working between Okhla and Nehru Place.",
-    status: "pending",
-    location: { lat: 28.5489, lng: 77.2769 },
-    supportCount: 4,
-  },
-  {
-    _id: "c004",
-    issueType: "sanitation",
-    description: "Garbage bins overflowing near Lajpat Rai Market.",
-    status: "closed",
-    location: { lat: 28.5435, lng: 77.2715 },
-    supportCount: 4,
-  },
-  {
-    _id: "c005",
-    issueType: "road",
-    description: "Footpath tiles broken near Delhi Metro Lajpat Nagar exit.",
-    status: "pending",
-    location: { lat: 28.5501, lng: 77.2732 },
-    supportCount: 2,
-  },
-  {
-    _id: "c006",
-    issueType: "water",
-    description: "Sewage overflow near Amar Colony.",
-    status: "in-progress",
-    location: { lat: 28.5458, lng: 77.2758 },
-    supportCount: 7,
-  },
-];
+const getDisplayStatus = (complaint) => {
+  if (complaint?.assignedTask?.status) return complaint.assignedTask.status;
+  return complaint.status;
+};
 
 export default function ComplaintMapScreen({ navigation }) {
 
@@ -65,7 +18,7 @@ export default function ComplaintMapScreen({ navigation }) {
   const heatmapPoints = complaints.map((c) => ({
   latitude: c.location?.lat,
   longitude: c.location?.lng,
-  weight: c.supportCount || 1
+  weight: 1
 }));
 
   useEffect(() => {
@@ -79,8 +32,8 @@ export default function ComplaintMapScreen({ navigation }) {
     const loc = await Location.getCurrentPositionAsync({});
     setLocation(loc.coords);
 
-    const res = await api.get("/complaints/nearby");
-    setComplaints(res.data);
+    const data = await getNearbyComplaints(loc.coords.latitude, loc.coords.longitude, 5);
+    setComplaints(data || []);
 
   } catch (err) {
     console.log(err);
@@ -122,7 +75,7 @@ export default function ComplaintMapScreen({ navigation }) {
             latitude: c.location?.lat,
             longitude: c.location?.lng,
           }}
-          title={c.issueType}
+          title={String(getDisplayStatus(c)).replace("-", " ")}
           description={c.description}
           onPress={() =>
             navigation.navigate("ComplaintDetail", { id: c._id })

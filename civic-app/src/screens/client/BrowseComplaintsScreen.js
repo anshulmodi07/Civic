@@ -1,71 +1,20 @@
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, TextInput, ScrollView } from "react-native";
 import { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import api from "../../api/axios";
+import { getAllComplaints } from "../../api/complaint.api";
 import { ISSUE_TYPES } from "../../utils/constants";
 
-const MOCK_COMPLAINTS = [
-  {
-    _id: "c001",
-    type: "hostel",
-    issueType: "electrician",
-    description: "Ceiling fan not working and one electrical socket is damaged in room.",
-    status: "in-progress",
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    location: { lat: 28.5468, lng: 77.2741 },
-    upvotes: 6,
-  },
-  {
-    _id: "c002",
-    type: "campus",
-    issueType: "plumber",
-    description: "Water leakage in the washing area, creating water puddles and floor damage.",
-    status: "assigned",
-    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    location: { lat: 28.5412, lng: 77.2698 },
-    upvotes: 3,
-  },
-  {
-    _id: "c003",
-    type: "hostel",
-    issueType: "ac",
-    description: "AC unit is not cooling properly, compressor seems faulty.",
-    status: "pending",
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    location: { lat: 28.5489, lng: 77.2769 },
-    upvotes: 4,
-  },
-  {
-    _id: "c004",
-    type: "campus",
-    issueType: "sanitation",
-    description: "Trash bins overflowing for 2 days, garbage scattered on ground. Pest infestation risk.",
-    status: "closed",
-    createdAt: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000).toISOString(),
-    location: { lat: 28.5435, lng: 77.2715 },
-    upvotes: 4,
-  },
-  {
-    _id: "c005",
-    type: "hostel",
-    issueType: "wifi",
-    description: "WiFi signal is extremely weak in this wing, unable to connect for video calls.",
-    status: "pending",
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    location: { lat: 28.5501, lng: 77.2732 },
-    upvotes: 2,
-  },
-  {
-    _id: "c006",
-    type: "campus",
-    issueType: "construction",
-    description: "Construction debris on the pathway, creating a safety hazard for students.",
-    status: "in-progress",
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    location: { lat: 28.5458, lng: 77.2758 },
-    upvotes: 7,
-  },
-];
+const getDisplayStatus = (complaint) => {
+  if (complaint?.assignedTask?.status) return complaint.assignedTask.status;
+  return complaint.status;
+};
+
+const getDepartmentName = (complaint) => {
+  const dept = complaint.departmentId;
+  if (!dept) return "";
+  if (typeof dept === "string") return dept;
+  return dept.name || "";
+};
 
 export default function BrowseComplaintsScreen({ navigation }) {
   const [complaints, setComplaints] = useState([]);
@@ -82,12 +31,11 @@ export default function BrowseComplaintsScreen({ navigation }) {
 
   const loadComplaints = async () => {
     try {
-      const res = await api.get("/complaints");
-      setComplaints(res.data);
+      const data = await getAllComplaints();
+      setComplaints(data || []);
     } catch (err) {
       console.log(err);
-      // Fallback to mock data
-      setComplaints(MOCK_COMPLAINTS);
+      setComplaints([]);
     } finally {
       setLoading(false);
     }
@@ -98,7 +46,7 @@ export default function BrowseComplaintsScreen({ navigation }) {
 
     // Filter by issue type
     if (selectedIssueType) {
-      filtered = filtered.filter((c) => c.issueType === selectedIssueType);
+      filtered = filtered.filter((c) => getDepartmentName(c) === selectedIssueType);
     }
 
     // Filter by complaint type (hostel/campus)
@@ -112,14 +60,14 @@ export default function BrowseComplaintsScreen({ navigation }) {
       filtered = filtered.filter(
         (c) =>
           c.description.toLowerCase().includes(search) ||
-          c.issueType.toLowerCase().includes(search)
+          getDepartmentName(c).toLowerCase().includes(search)
       );
     }
 
     // Sort
     let sorted = [...filtered];
     if (sortBy === "popular") {
-      sorted.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
+      sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     } else if (sortBy === "recent") {
       sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
@@ -131,14 +79,14 @@ export default function BrowseComplaintsScreen({ navigation }) {
     const getIssueColor = (issueType) => {
       const colors = {
         electrician: "#f59e0b",
-        ac: "#3b82f6",
         plumber: "#10b981",
-        construction: "#f97316",
-        sanitation: "#ef4444",
+        civil: "#f97316",
+        carpenter: "#8b5cf6",
         wifi: "#8b5cf6",
       };
       return colors[issueType] || "#64748b";
     };
+    const departmentName = getDepartmentName(item);
 
     return (
       <TouchableOpacity
@@ -146,18 +94,14 @@ export default function BrowseComplaintsScreen({ navigation }) {
         onPress={() => navigation.navigate("ComplaintDetail", { id: item._id })}
       >
         <View style={styles.cardHeader}>
-          <View style={[styles.issueTypeIcon, { backgroundColor: getIssueColor(item.issueType) + "20" }]}>
-            <Text style={[styles.issueTypeEmoji, { color: getIssueColor(item.issueType) }]}>
+          <View style={[styles.issueTypeIcon, { backgroundColor: getIssueColor(departmentName) + "20" }]}>
+            <Text style={[styles.issueTypeEmoji, { color: getIssueColor(departmentName) }]}>
               {item.type === "hostel" ? "🏠" : "🏫"}
             </Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.issueType}>{item.issueType.toUpperCase()}</Text>
+            <Text style={styles.issueType}>{departmentName.toUpperCase()}</Text>
             <Text style={styles.complaintType}>{item.type === "hostel" ? "Hostel" : "Campus"}</Text>
-          </View>
-          <View style={styles.upvotesBadge}>
-            <Ionicons name="thumbs-up" size={14} color="#f59e0b" />
-            <Text style={styles.upvotesText}>{item.upvotes || 0}</Text>
           </View>
         </View>
 
@@ -167,8 +111,8 @@ export default function BrowseComplaintsScreen({ navigation }) {
 
         <View style={styles.cardFooter}>
           <View style={styles.statusBadge}>
-            <View style={[styles.statusDot, { backgroundColor: getStatusColor(item.status) }]} />
-            <Text style={styles.statusText}>{item.status.replace("-", " ")}</Text>
+            <View style={[styles.statusDot, { backgroundColor: getStatusColor(getDisplayStatus(item)) }]} />
+            <Text style={styles.statusText}>{String(getDisplayStatus(item)).replace("-", " ")}</Text>
           </View>
           <Text style={styles.timeAgo}>
             {Math.floor((Date.now() - new Date(item.createdAt)) / (1000 * 60 * 60 * 24))} days ago
@@ -181,9 +125,10 @@ export default function BrowseComplaintsScreen({ navigation }) {
   const getStatusColor = (status) => {
     const colors = {
       pending: "#fbbf24",
-      assigned: "#60a5fa",
       "in-progress": "#60a5fa",
-      closed: "#34d399",
+      accepted: "#60a5fa",
+      completed: "#34d399",
+      incompleted: "#ef4444",
     };
     return colors[status] || "#94a3b8";
   };

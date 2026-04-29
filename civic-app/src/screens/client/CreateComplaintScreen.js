@@ -6,12 +6,13 @@ import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import RNPickerSelect from "react-native-picker-select";
 import { ISSUE_TYPES } from "../../utils/constants";
-// import { createComplaint } from "../../api/complaint.api";
+import { getDepartments } from "../../api/department.api";
 import api from "../../api/axios";
 
 export default function CreateComplaintScreen({ navigation }) {
   const [description, setDescription] = useState("");
-  const [issueType, setIssueType] = useState(null);
+  const [departmentId, setDepartmentId] = useState(null);
+  const [departmentItems, setDepartmentItems] = useState(ISSUE_TYPES);
   const [location, setLocation] = useState(null);
   const [images, setImages] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,6 +37,19 @@ export default function CreateComplaintScreen({ navigation }) {
         Alert.alert("Location Error", "Unable to get current location");
       }
       setLoadingLocation(false);
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const depts = await getDepartments();
+        if (depts?.length) {
+          setDepartmentItems(depts.map((d) => ({ label: d.name.toUpperCase(), value: d._id })));
+        }
+      } catch (e) {
+        // fallback
+      }
     })();
   }, []);
 
@@ -91,8 +105,8 @@ export default function CreateComplaintScreen({ navigation }) {
     return;
   }
 
-  if (!issueType) {
-    Alert.alert("Validation Error", "Please select an issue type");
+  if (!departmentId) {
+    Alert.alert("Validation Error", "Please select a department");
     return;
   }
 
@@ -106,7 +120,11 @@ export default function CreateComplaintScreen({ navigation }) {
   const formData = new FormData();
 
   formData.append("description", description);
-  formData.append("issueType", issueType);
+  formData.append("departmentId", departmentId);
+  // default flow: campus complaint (generic screen)
+  formData.append("type", "campus");
+  formData.append("area", "Other");
+  formData.append("locationAddress", "N/A");
 
   formData.append(
     "location",
@@ -182,14 +200,14 @@ export default function CreateComplaintScreen({ navigation }) {
         {/* Issue Type Selection */}
         <View style={styles.section}>
           <Text style={styles.label}>
-            <Ionicons name="list" size={16} color="#334155" /> Issue Type *
+            <Ionicons name="list" size={16} color="#334155" /> Department *
           </Text>
           <View style={styles.pickerWrapper}>
             <RNPickerSelect
-              onValueChange={(value) => setIssueType(value)}
-              items={ISSUE_TYPES}
+              onValueChange={(value) => setDepartmentId(value)}
+              items={departmentItems}
               placeholder={{
-                label: "Select an issue type...",
+                label: "Select a department...",
                 value: null,
                 color: '#94a3b8',
               }}
@@ -197,10 +215,10 @@ export default function CreateComplaintScreen({ navigation }) {
               Icon={() => <Ionicons name="chevron-down" size={20} color="#64748b" />}
             />
           </View>
-          {issueType && (
+          {departmentId && (
             <View style={styles.selectedBadge}>
               <Ionicons name="checkmark-circle" size={16} color="#22c55e" />
-              <Text style={styles.selectedText}>{ISSUE_TYPES.find(t => t.value === issueType)?.label}</Text>
+              <Text style={styles.selectedText}>{departmentItems.find(t => t.value === departmentId)?.label}</Text>
             </View>
           )}
         </View>

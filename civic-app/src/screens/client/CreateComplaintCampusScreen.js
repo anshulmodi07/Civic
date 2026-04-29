@@ -17,6 +17,7 @@ import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import RNPickerSelect from "react-native-picker-select";
 import { ISSUE_TYPES, LOCATION_LANDMARKS } from "../../utils/constants";
+import { getDepartments } from "../../api/department.api";
 import {
   validateComplaintForm,
   getErrorMessages,
@@ -27,7 +28,8 @@ import api from "../../api/axios";
 export default function CreateComplaintCampusScreen({ navigation }) {
   const [locationLandmark, setLocationLandmark] = useState(null);
   const [locationAddress, setLocationAddress] = useState("");
-  const [issueType, setIssueType] = useState(null);
+  const [departmentId, setDepartmentId] = useState(null);
+  const [departmentItems, setDepartmentItems] = useState(ISSUE_TYPES);
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState(null);
   const [images, setImages] = useState([]);
@@ -53,6 +55,19 @@ export default function CreateComplaintCampusScreen({ navigation }) {
         Alert.alert("Location Error", "Unable to get current location");
       }
       setLoadingLocation(false);
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const depts = await getDepartments();
+        if (depts?.length) {
+          setDepartmentItems(depts.map((d) => ({ label: d.name.toUpperCase(), value: d._id })));
+        }
+      } catch (e) {
+        // fall back to constants
+      }
     })();
   }, []);
 
@@ -105,9 +120,9 @@ export default function CreateComplaintCampusScreen({ navigation }) {
   const submitComplaint = async () => {
     const formData = {
       type: "campus",
-      locationLandmark,
+      area: locationLandmark,
       locationAddress,
-      issueType,
+      departmentId,
       description,
     };
 
@@ -126,9 +141,9 @@ export default function CreateComplaintCampusScreen({ navigation }) {
 
     const submitData = new FormData();
     submitData.append("type", "campus");
-    submitData.append("locationLandmark", locationLandmark || "");
+    submitData.append("area", locationLandmark || "");
     submitData.append("locationAddress", locationAddress);
-    submitData.append("issueType", issueType);
+    submitData.append("departmentId", departmentId);
     submitData.append("description", description);
     submitData.append(
       "location",
@@ -209,6 +224,26 @@ export default function CreateComplaintCampusScreen({ navigation }) {
           </View>
         </View>
 
+        {/* Department */}
+        <View style={styles.section}>
+          <Text style={styles.label}>
+            <Ionicons name="list" size={16} color="#334155" /> Department *
+          </Text>
+          <View style={styles.pickerWrapper}>
+            <RNPickerSelect
+              onValueChange={(value) => setDepartmentId(value)}
+              items={departmentItems}
+              placeholder={{
+                label: "Select a department...",
+                value: null,
+                color: "#94a3b8",
+              }}
+              style={pickerSelectStyles}
+              Icon={() => <Ionicons name="chevron-down" size={20} color="#64748b" />}
+            />
+          </View>
+        </View>
+
         {/* Location - Address */}
         <View style={styles.section}>
           <Text style={styles.label}>
@@ -228,17 +263,17 @@ export default function CreateComplaintCampusScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Issue Type */}
+        {/* Department */}
         <View style={styles.section}>
           <Text style={styles.label}>
-            <Ionicons name="alert-circle" size={16} color="#334155" /> Issue Type *
+            <Ionicons name="alert-circle" size={16} color="#334155" /> Department *
           </Text>
           <View style={styles.pickerWrapper}>
             <RNPickerSelect
-              onValueChange={(value) => setIssueType(value)}
-              items={ISSUE_TYPES}
+              onValueChange={(value) => setDepartmentId(value)}
+              items={departmentItems}
               placeholder={{
-                label: "Select issue type...",
+                label: "Select department...",
                 value: null,
                 color: "#94a3b8",
               }}

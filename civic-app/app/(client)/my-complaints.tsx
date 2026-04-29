@@ -18,13 +18,29 @@ type FilterValue = "all" | "pending" | "in_progress" | "resolved";
 type Complaint = {
   _id: string;
   type: "hostel" | "campus";
-  issueType: string;
+  departmentId?: string | { _id: string; name: string };
+  departmentName?: string;
   description: string;
   status: string;
-  upvotes: number;
+  assignedTask?: { status?: string };
+  upvotes?: number;
+  upvotesCount?: number;
   createdAt: string;
   images?: any[];
 };
+
+const getDepartmentName = (complaint: Complaint) => {
+  if (complaint.departmentName) return complaint.departmentName;
+  const dept = complaint.departmentId;
+  if (!dept) return "";
+  return typeof dept === "string" ? dept : dept.name || "";
+};
+
+const getDisplayStatus = (complaint: Complaint) =>
+  complaint.assignedTask?.status || complaint.status || "pending";
+
+const getSupportCount = (complaint: Complaint) =>
+  complaint.upvotesCount ?? complaint.upvotes ?? 0;
 
 export default function MyComplaints() {
   const router = useRouter();
@@ -50,14 +66,21 @@ export default function MyComplaints() {
 
   const getFiltered = () => {
     if (filterStatus === "all") return complaints;
-    return complaints.filter((item) => item.status === filterStatus);
+    return complaints.filter((item) => {
+      const status = getDisplayStatus(item);
+      if (filterStatus === "in_progress") return ["accepted", "in-progress"].includes(status);
+      if (filterStatus === "resolved") return status === "completed";
+      return status === filterStatus;
+    });
   };
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       pending: "#f97316",
-      in_progress: "#3b82f6",
-      resolved: "#22c55e",
+      accepted: "#3b82f6",
+      "in-progress": "#3b82f6",
+      completed: "#22c55e",
+      incompleted: "#ef4444",
     };
     return colors[status] || "#64748b";
   };
@@ -65,17 +88,19 @@ export default function MyComplaints() {
   const getStatusBgColor = (status: string) => {
     const colors: Record<string, string> = {
       pending: "#fed7aa",
-      in_progress: "#bfdbfe",
-      resolved: "#bbf7d0",
+      accepted: "#bfdbfe",
+      "in-progress": "#bfdbfe",
+      completed: "#bbf7d0",
+      incompleted: "#fecaca",
     };
     return colors[status] || "#f1f5f9";
   };
 
   const counts = {
     all: complaints.length,
-    pending: complaints.filter((item) => item.status === "pending").length,
-    in_progress: complaints.filter((item) => item.status === "in_progress").length,
-    resolved: complaints.filter((item) => item.status === "resolved").length,
+    pending: complaints.filter((item) => getDisplayStatus(item) === "pending").length,
+    in_progress: complaints.filter((item) => ["accepted", "in-progress"].includes(getDisplayStatus(item))).length,
+    resolved: complaints.filter((item) => getDisplayStatus(item) === "completed").length,
   };
 
   const handleToggleSupport = async (complaintId: string) => {
@@ -86,7 +111,9 @@ export default function MyComplaints() {
       const response = await toggleUpvote(complaintId);
       setComplaints((prev) =>
         prev.map((item) =>
-          item._id === complaintId ? { ...item, upvotes: response.upvotes } : item
+          item._id === complaintId
+            ? { ...item, upvotes: response.upvotes, upvotesCount: response.upvotes }
+            : item
         )
       );
     } catch (error) {
@@ -97,7 +124,9 @@ export default function MyComplaints() {
   };
 
   const renderComplaint = ({ item }: { item: Complaint }) => {
-    const sla = checkSLA(item.issueType, item.createdAt, item.status);
+    const departmentName = getDepartmentName(item);
+    const status = getDisplayStatus(item);
+    const sla = checkSLA(departmentName, item.createdAt, status);
     const daysSince = Math.floor(
       (Date.now() - Number(new Date(item.createdAt))) / (1000 * 60 * 60 * 24)
     );
@@ -111,7 +140,7 @@ export default function MyComplaints() {
       >
         <View style={styles.cardHeader}>
           <View>
-            <Text style={styles.issueType}>{item.issueType.toUpperCase()}</Text>
+            <Text style={styles.issueType}>{(departmentName || "Department").toUpperCase()}</Text>
             <Text style={styles.issueDate}>
               {daysSince === 0
                 ? "Today"
@@ -126,9 +155,9 @@ export default function MyComplaints() {
           {item.description}
         </Text>
         <View style={styles.footerRow}>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusBgColor(item.status) }]}>
-            <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-              {item.status.replace("_", " ").toUpperCase()}
+          <View style={[styles.statusBadge, { backgroundColor: getStatusBgColor(status) }]}>
+            <Text style={[styles.statusText, { color: getStatusColor(status) }]}>
+              {status.replace("-", " ").toUpperCase()}
             </Text>
           </View>
           <View style={styles.typeBadge}>
@@ -164,7 +193,7 @@ export default function MyComplaints() {
                 upvotingIds.includes(item._id) && styles.supportTextActive,
               ]}
             >
-              {item.upvotes || 0}
+              {getSupportCount(item)}
             </Text>
           </TouchableOpacity>
         </View>

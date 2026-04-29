@@ -13,7 +13,7 @@ import {
 } from "react-native";
 // import { getMyTasks } from "../../api/task.api";
 // import { updateAvailability } from "../../api/user.api";
-import TaskCard from "../../components/Taskcard";
+import TaskCard from "../../components/TaskCard";
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../api/axios";
 

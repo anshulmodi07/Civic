@@ -6,40 +6,19 @@ import { Ionicons } from '@expo/vector-icons';
 import StatusBadge from "../../components/StatusBadge";
 import { checkSLA } from "../../utils/sla";
 import SLABadge from "../../components/SLABadge";
-import api from "../../api/axios";
+import { getMyComplaints } from "../../api/complaint.api";
 
-const MY_MOCK_COMPLAINTS = [
-  {
-    _id: "c003",
-    issueType: "electricity",
-    description: "Street lights on the main road between Okhla and Nehru Place have not been working for 3 weeks. Creates safety hazard at night.",
-    status: "pending",
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    location: { lat: 28.5489, lng: 77.2769 },
-    supporters: ["u3", "u8", "u9", "u10"],
-    images: [],
-  },
-  {
-    _id: "c005",
-    issueType: "road",
-    description: "Footpath tiles broken and uneven near Delhi Metro Lajpat Nagar exit. Senior citizens and children are at risk of tripping.",
-    status: "pending",
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    location: { lat: 28.5501, lng: 77.2732 },
-    supporters: ["u2", "u3"],
-    images: [],
-  },
-  {
-    _id: "c004",
-    issueType: "sanitation",
-    description: "Garbage bins overflowing near Lajpat Rai Market for 4 days. No pickup has happened. Stray animals spreading waste on the road.",
-    status: "closed",
-    createdAt: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000).toISOString(),
-    location: { lat: 28.5435, lng: 77.2715 },
-    supporters: ["u1", "u4", "u6", "u11"],
-    images: [],
-  },
-];
+const getDisplayStatus = (complaint) => {
+  if (complaint?.assignedTask?.status) return complaint.assignedTask.status;
+  return complaint.status;
+};
+
+const getDepartmentName = (complaint) => {
+  const dept = complaint.departmentId;
+  if (!dept) return "";
+  if (typeof dept === "string") return dept;
+  return dept.name || "";
+};
 
 export default function MyComplaintsScreen({ navigation }) {
   const [complaints, setComplaints] = useState([]);
@@ -53,8 +32,8 @@ export default function MyComplaintsScreen({ navigation }) {
 
   const loadComplaints = async () => {
   try {
-    const res = await api.get("/complaints/my");
-    setComplaints(res.data);
+    const data = await getMyComplaints();
+    setComplaints(data || []);
   } catch (err) {
     console.log(err);
   } finally {
@@ -72,11 +51,13 @@ export default function MyComplaintsScreen({ navigation }) {
     switch (status) {
       case 'pending':
         return { bg: '#fef3c7', text: '#92400e', icon: 'hourglass-outline' };
-      case 'assigned':
       case 'in-progress':
+      case 'accepted':
         return { bg: '#dbeafe', text: '#1e40af', icon: 'time-outline' };
-      case 'closed':
+      case 'completed':
         return { bg: '#dcfce7', text: '#15803d', icon: 'checkmark-circle-outline' };
+      case 'incompleted':
+        return { bg: '#fee2e2', text: '#b91c1c', icon: 'close-circle-outline' };
       default:
         return { bg: '#f1f5f9', text: '#475569', icon: 'help-circle-outline' };
     }
@@ -84,21 +65,23 @@ export default function MyComplaintsScreen({ navigation }) {
 
   const getFilteredComplaints = () => {
     if (filterStatus === 'all') return complaints;
-    return complaints.filter(c => c.status === filterStatus);
+    return complaints.filter(c => getDisplayStatus(c) === filterStatus);
   };
 
   const getStatusCounts = () => {
     return {
       all: complaints.length,
-      pending: complaints.filter(c => c.status === 'pending').length,
-      'in-progress': complaints.filter(c => c.status === 'in-progress' || c.status === 'assigned').length,
-      closed: complaints.filter(c => c.status === 'closed').length,
+      pending: complaints.filter(c => getDisplayStatus(c) === 'pending').length,
+      'in-progress': complaints.filter(c => ['in-progress','accepted'].includes(getDisplayStatus(c))).length,
+      closed: complaints.filter(c => getDisplayStatus(c) === 'completed').length,
     };
   };
 
   const renderItem = ({ item }) => {
-    const sla = checkSLA(item.issueType, item.createdAt, item.status);
-    const statusColor = getStatusColor(item.status);
+    const displayStatus = getDisplayStatus(item);
+    const departmentName = getDepartmentName(item);
+    const sla = checkSLA(departmentName, item.createdAt, displayStatus);
+    const statusColor = getStatusColor(displayStatus);
     const daysSince = Math.floor((Date.now() - new Date(item.createdAt)) / (1000 * 60 * 60 * 24));
 
     return (
@@ -113,7 +96,7 @@ export default function MyComplaintsScreen({ navigation }) {
               <Ionicons name={statusColor.icon} size={20} color={statusColor.text} />
             </View>
             <View style={styles.issueInfo}>
-              <Text style={styles.issueType}>{item.issueType.toUpperCase()}</Text>
+              <Text style={styles.issueType}>{departmentName.toUpperCase()}</Text>
               <Text style={styles.issueDate}>
                 {daysSince === 0 ? 'Today' : daysSince === 1 ? 'Yesterday' : `${daysSince} days ago`}
               </Text>
@@ -130,7 +113,7 @@ export default function MyComplaintsScreen({ navigation }) {
           <View style={[styles.statusBadge, { backgroundColor: statusColor.bg }]}>
             <View style={[styles.statusDot, { backgroundColor: statusColor.text }]} />
             <Text style={[styles.statusText, { color: statusColor.text }]}>
-              {item.status.replace('-', ' ').toUpperCase()}
+              {String(displayStatus).replace('-', ' ').toUpperCase()}
             </Text>
           </View>
 

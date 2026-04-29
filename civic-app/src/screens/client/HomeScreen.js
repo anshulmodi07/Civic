@@ -166,7 +166,7 @@ useEffect(() => {
             <View style={styles.activityDot} />
             <View style={styles.activityContent}>
               <Text style={styles.activityTitle}>Street Light Repair</Text>
-              <Text style={styles.activityStatus}>Status updated to "In Progress"</Text>
+              <Text style={styles.activityStatus}>Status updated to &quot;In Progress&quot;</Text>
               <Text style={styles.activityTime}>2 hours ago</Text>
             </View>
           </View>

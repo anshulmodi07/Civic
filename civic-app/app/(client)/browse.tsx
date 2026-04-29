@@ -19,12 +19,28 @@ import { ISSUE_TYPES } from "@/src/utils/constants";
 type Complaint = {
   _id: string;
   type: "hostel" | "campus";
-  issueType: string;
+  departmentId?: string | { _id: string; name: string };
+  departmentName?: string;
   description: string;
   status: string;
-  upvotes: number;
+  assignedTask?: { status?: string };
+  upvotes?: number;
+  upvotesCount?: number;
   createdAt: string;
 };
+
+const getDepartmentName = (complaint: Complaint) => {
+  if (complaint.departmentName) return complaint.departmentName;
+  const dept = complaint.departmentId;
+  if (!dept) return "";
+  return typeof dept === "string" ? dept : dept.name || "";
+};
+
+const getDisplayStatus = (complaint: Complaint) =>
+  complaint.assignedTask?.status || complaint.status || "pending";
+
+const getSupportCount = (complaint: Complaint) =>
+  complaint.upvotesCount ?? complaint.upvotes ?? 0;
 
 export default function BrowseComplaints() {
   const router = useRouter();
@@ -64,7 +80,9 @@ export default function BrowseComplaints() {
       const response = await toggleUpvote(complaintId);
       setComplaints((prev) =>
         prev.map((item) =>
-          item._id === complaintId ? { ...item, upvotes: response.upvotes } : item
+          item._id === complaintId
+            ? { ...item, upvotes: response.upvotes, upvotesCount: response.upvotes }
+            : item
         )
       );
     } catch (error) {
@@ -84,7 +102,7 @@ export default function BrowseComplaints() {
       results = results.filter(
         (c) =>
           c.description.toLowerCase().includes(search) ||
-          c.issueType.toLowerCase().includes(search)
+          getDepartmentName(c).toLowerCase().includes(search)
       );
     }
 
@@ -95,12 +113,12 @@ export default function BrowseComplaints() {
 
     // Issue type filter
     if (issueTypeFilter !== "all") {
-      results = results.filter((c) => c.issueType === issueTypeFilter);
+      results = results.filter((c) => getDepartmentName(c) === issueTypeFilter);
     }
 
     // Sort
     if (sortBy === "popular") {
-      results.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
+      results.sort((a, b) => getSupportCount(b) - getSupportCount(a));
     } else {
       results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
@@ -111,10 +129,9 @@ export default function BrowseComplaints() {
   const getIssueTypeIcon = (issueType: string) => {
     const iconMap: Record<string, string> = {
       electrician: "flash",
-      ac: "snow",
       plumber: "water",
-      construction: "hammer",
-      sanitation: "trash",
+      civil: "hammer",
+      carpenter: "construct",
       wifi: "wifi",
     };
     return iconMap[issueType] || "alert-circle";
@@ -123,8 +140,10 @@ export default function BrowseComplaints() {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       pending: "#f97316",
-      in_progress: "#3b82f6",
-      resolved: "#22c55e",
+      accepted: "#3b82f6",
+      "in-progress": "#3b82f6",
+      completed: "#22c55e",
+      incompleted: "#ef4444",
     };
     return colors[status] || "#64748b";
   };
@@ -139,8 +158,13 @@ export default function BrowseComplaints() {
     return "just now";
   };
 
-  const renderItem = ({ item }: { item: Complaint }) => (
-    <TouchableOpacity
+  const renderItem = ({ item }: { item: Complaint }) => {
+    const departmentName = getDepartmentName(item);
+    const status = getDisplayStatus(item);
+    const supportCount = getSupportCount(item);
+
+    return (
+      <TouchableOpacity
       style={styles.card}
       activeOpacity={0.8}
       onPress={() =>
@@ -149,12 +173,12 @@ export default function BrowseComplaints() {
     >
       <View style={styles.cardHeader}>
         <View style={styles.issueTypeContainer}>
-          <Ionicons name={getIssueTypeIcon(item.issueType) as any} size={18} color="#2563eb" />
-          <Text style={styles.issueType}>{item.issueType}</Text>
+          <Ionicons name={getIssueTypeIcon(departmentName) as any} size={18} color="#2563eb" />
+          <Text style={styles.issueType}>{departmentName || "Department"}</Text>
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + "20" }]}>
-          <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-            {item.status}
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(status) + "20" }]}>
+          <Text style={[styles.statusText, { color: getStatusColor(status) }]}>
+            {status.replace("-", " ")}
           </Text>
         </View>
       </View>
@@ -186,14 +210,15 @@ export default function BrowseComplaints() {
                 upvotingIds.includes(item._id) && { color: "#fff" },
               ]}
             >
-              {item.upvotes || 0}
+              {supportCount}
             </Text>
           </TouchableOpacity>
           <Text style={styles.timeText}>{timeAgo(item.createdAt)}</Text>
         </View>
       </View>
     </TouchableOpacity>
-  );
+    );
+  };
 
   const renderFilterButton = (
     label: string,

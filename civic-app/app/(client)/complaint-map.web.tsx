@@ -1,13 +1,30 @@
 import { useEffect, useRef, useState } from "react";
 import { View, ActivityIndicator, StyleSheet, Text } from "react-native";
-import { getNearbyComplaints } from "@/src/api/complaint.api";
+import { getAllComplaints, getNearbyComplaints } from "@/src/api/complaint.api";
 
 type Complaint = {
   _id: string;
-  issueType: string;
+  departmentId?: string | { _id: string; name: string };
+  departmentName?: string;
   description: string;
   location: { lat: number; lng: number };
 };
+
+const getDepartmentName = (complaint: Complaint) => {
+  if (complaint.departmentName) return complaint.departmentName;
+  const dept = complaint.departmentId;
+  if (!dept) return "";
+  return typeof dept === "string" ? dept : dept.name || "";
+};
+
+const getBrowserPosition = () =>
+  new Promise<GeolocationPosition>((resolve, reject) => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      reject(new Error("Geolocation unavailable"));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(resolve, reject);
+  });
 
 export default function ComplaintMapWeb() {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
@@ -20,8 +37,18 @@ export default function ComplaintMapWeb() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const nearby = await getNearbyComplaints();
-        setComplaints(nearby || []);
+        try {
+          const position = await getBrowserPosition();
+          const nearby = await getNearbyComplaints(
+            position.coords.latitude,
+            position.coords.longitude,
+            5
+          );
+          setComplaints(nearby || []);
+        } catch {
+          const allComplaints = await getAllComplaints();
+          setComplaints(allComplaints || []);
+        }
       } catch (error) {
         console.log("Map load error:", error);
       } finally {
@@ -93,7 +120,7 @@ export default function ComplaintMapWeb() {
 
         marker.bindPopup(`
           <div style="max-width:220px">
-            <strong>${item.issueType.toUpperCase()}</strong><br />
+            <strong>${(getDepartmentName(item) || "Department").toUpperCase()}</strong><br />
             <span style="font-size:13px">${item.description}</span><br />
             <span style="font-size:12px;color:#64748b">
               ${item.location.lat.toFixed(5)}, ${item.location.lng.toFixed(5)}

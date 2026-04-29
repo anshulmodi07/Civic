@@ -2,7 +2,14 @@ import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, StatusBar,
 import { useEffect, useState } from "react";
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { getComplaintById, toggleUpvote } from "../../api/complaint.api";
+import {
+  addComplaintComment,
+  getAssetUrl,
+  getComplaintById,
+  getComplaintComments,
+  getComplaintTimeline,
+  toggleSupport,
+} from "../../api/complaint.api";
 import StatusBadge from "../../components/StatusBadge";
 import { TextInput } from "react-native";
 // import { addComment, getComments } from "../../api/comment.api";
@@ -10,131 +17,7 @@ import { TextInput } from "react-native";
 
 const { width } = Dimensions.get('window');
 
-/* ─── Mock data store (matches IDs used in Browse / My / Map screens) ─── */
-const MOCK_COMPLAINTS = {
-  c001: {
-    _id: "c001",
-    issueType: "road",
-    description: "Large pothole near the Lajpat Nagar market entry gate. Two-wheelers have fallen twice this week. Needs urgent patching before monsoon.",
-    status: "in-progress",
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    location: { lat: 28.5468, lng: 77.2741 },
-    supporters: ["u1", "u2", "u3", "u4", "u5", "u6"],
-    images: [],
-    assignedTaskId: { _id: "t01" },
-    citizenId: { name: "Rahul Mehta", email: "rahul@example.com" },
-  },
-  c002: {
-    _id: "c002",
-    issueType: "water",
-    description: "Water supply has been irregular for the past 10 days in Block C, Pocket 4, Okhla Phase 2. Pipes appear to be leaking near the main junction.",
-    status: "assigned",
-    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    location: { lat: 28.5412, lng: 77.2698 },
-    supporters: ["u2", "u5", "u7"],
-    images: [],
-    assignedTaskId: { _id: "t02" },
-    citizenId: { name: "Priya Sharma", email: "priya@example.com" },
-  },
-  c003: {
-    _id: "c003",
-    issueType: "electricity",
-    description: "Street lights on the main road between Okhla and Nehru Place have not been working for 3 weeks. Creates safety hazard at night.",
-    status: "pending",
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    location: { lat: 28.5489, lng: 77.2769 },
-    supporters: ["u3", "u8", "u9", "u10"],
-    images: [],
-    assignedTaskId: null,
-    citizenId: { name: "Ankit Verma", email: "ankit@example.com" },
-  },
-  c004: {
-    _id: "c004",
-    issueType: "sanitation",
-    description: "Garbage bins overflowing near Lajpat Rai Market for 4 days. No pickup has happened. Stray animals are spreading waste on the road.",
-    status: "closed",
-    createdAt: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000).toISOString(),
-    location: { lat: 28.5435, lng: 77.2715 },
-    supporters: ["u1", "u4", "u6", "u11"],
-    images: [],
-    assignedTaskId: { _id: "t04", proofImages: [] },
-    citizenId: { name: "Sunita Rao", email: "sunita@example.com" },
-  },
-  c005: {
-    _id: "c005",
-    issueType: "road",
-    description: "Footpath tiles broken and uneven near Delhi Metro Lajpat Nagar exit. Senior citizens and children are at risk of tripping.",
-    status: "pending",
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    location: { lat: 28.5501, lng: 77.2732 },
-    supporters: ["u2", "u3"],
-    images: [],
-    assignedTaskId: null,
-    citizenId: { name: "Deepak Joshi", email: "deepak@example.com" },
-  },
-  c006: {
-    _id: "c006",
-    issueType: "water",
-    description: "Sewage overflow onto the street near Amar Colony for the second time this month. Strong odour and health risk for residents.",
-    status: "in-progress",
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    location: { lat: 28.5458, lng: 77.2758 },
-    supporters: ["u1", "u5", "u6", "u7", "u8", "u9", "u12"],
-    images: [],
-    assignedTaskId: { _id: "t06" },
-    citizenId: { name: "Kavita Nair", email: "kavita@example.com" },
-  },
-};
-
-const MOCK_TIMELINES = {
-  c001: [
-    { newStatus: "pending",     actionType: "CREATED",       createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
-    { newStatus: "assigned",    actionType: "STATUS_UPDATE",  createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString() },
-    { newStatus: "in-progress", actionType: "STATUS_UPDATE",  createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
-  ],
-  c002: [
-    { newStatus: "pending",  actionType: "CREATED",       createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString() },
-    { newStatus: "assigned", actionType: "STATUS_UPDATE",  createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString() },
-  ],
-  c003: [
-    { newStatus: "pending", actionType: "CREATED", createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
-  ],
-  c004: [
-    { newStatus: "pending",     actionType: "CREATED",       createdAt: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000).toISOString() },
-    { newStatus: "assigned",    actionType: "STATUS_UPDATE",  createdAt: new Date(Date.now() - 16 * 24 * 60 * 60 * 1000).toISOString() },
-    { newStatus: "in-progress", actionType: "STATUS_UPDATE",  createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString() },
-    { newStatus: "closed",      actionType: "STATUS_UPDATE",  createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString() },
-  ],
-  c005: [
-    { newStatus: "pending", actionType: "CREATED", createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() },
-  ],
-  c006: [
-    { newStatus: "pending",     actionType: "CREATED",       createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() },
-    { newStatus: "assigned",    actionType: "STATUS_UPDATE",  createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
-    { newStatus: "in-progress", actionType: "STATUS_UPDATE",  createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
-  ],
-};
-
-const MOCK_COMMENTS = {
-  c001: [
-    { text: "This pothole has been here for over a month. Bike tyres keep bursting.", userId: { name: "Neha K." }, createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString() },
-    { text: "Agree — the municipality needs to act before the rains make it worse.", userId: { name: "Rajan S." }, createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
-  ],
-  c002: [
-    { text: "Our entire building has been storing water in drums since last week.", userId: { name: "Pooja M." }, createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString() },
-  ],
-  c003: [],
-  c004: [
-    { text: "The smell was unbearable. Good to see it finally got resolved.", userId: { name: "Arun T." }, createdAt: new Date(Date.now() - 11 * 24 * 60 * 60 * 1000).toISOString() },
-    { text: "Took way too long but glad the bins are cleared now.", userId: { name: "Sneha R." }, createdAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000).toISOString() },
-  ],
-  c005: [],
-  c006: [
-    { text: "Children cannot play outside because of the sewage water. Please escalate.", userId: { name: "Meera P." }, createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString() },
-    { text: "Same issue happened 3 months ago. The root cause was never fixed.", userId: { name: "Vivek D." }, createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
-    { text: "I've raised a separate health concern with the ward office too.", userId: { name: "Asha G." }, createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
-  ],
-};
+/* Data now comes from backend (Complaint + Task + Interaction) */
 
 /* ─────────────────────────────────────────────────────── */
 
@@ -159,8 +42,11 @@ export default function ComplaintDetailScreen({ route, navigation }) {
     try {
       const data = await getComplaintById(id);
       setComplaint(data);
-      setSupportCount(data.supporters?.length || 0);
-      setHasSupported(data.supporters?.includes("user_demo") || false);
+      setSupportCount(Number(data?.upvotesCount || 0));
+      setHasSupported(Boolean(data?.hasUpvoted));
+
+      const timelineData = await getComplaintTimeline(id);
+      setTimeline(timelineData || []);
     } catch (err) {
       console.log(err);
     } finally {
@@ -171,8 +57,8 @@ export default function ComplaintDetailScreen({ route, navigation }) {
   const loadComments = async () => {
     try {
       setLoadingComments(true);
-      await new Promise((r) => setTimeout(r, 400));
-      setComments([...(MOCK_COMMENTS[id] || [])]);
+      const data = await getComplaintComments(id);
+      setComments(data || []);
     } catch (err) {
       console.log("Failed to load comments", err);
     } finally {
@@ -182,23 +68,23 @@ export default function ComplaintDetailScreen({ route, navigation }) {
 
   const handleAddComment = async () => {
     if (!commentInput.trim()) return;
-    const newComment = {
-      text: commentInput.trim(),
-      userId: { name: "You" },
-      createdAt: new Date().toISOString(),
-    };
-    setComments((prev) => [...prev, newComment]);
-    setCommentInput("");
+    try {
+      const created = await addComplaintComment(id, commentInput.trim());
+      setComments((prev) => [created, ...prev]);
+      setCommentInput("");
+    } catch (err) {
+      console.log("Failed to add comment", err);
+    }
   };
 
   const [isSupporting, setIsSupporting] = useState(false);
 
   const handleSupport = async () => {
-    if (hasSupported || isSupporting) return;
+    if (isSupporting) return;
     setIsSupporting(true);
 
     try {
-      const result = await toggleUpvote(id);
+      const result = await toggleSupport(id);
       setSupportCount(result.upvotes);
       setHasSupported(result.upvoted);
     } catch (err) {
@@ -208,12 +94,25 @@ export default function ComplaintDetailScreen({ route, navigation }) {
     }
   };
 
+  const getDisplayStatus = (c) => {
+    if (c?.assignedTask?.status) return c.assignedTask.status;
+    return c.status;
+  };
+
+  const getDepartmentName = (c) => {
+    const dept = c.departmentId;
+    if (!dept) return "";
+    if (typeof dept === "string") return dept;
+    return dept.name || "";
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending':     return { bg: '#fef3c7', text: '#92400e', icon: 'hourglass-outline',   label: 'Pending Review' };
-      case 'assigned':    return { bg: '#dbeafe', text: '#1e40af', icon: 'person-outline',       label: 'Assigned to Team' };
+      case 'accepted':    return { bg: '#dbeafe', text: '#1e40af', icon: 'person-outline',       label: 'Accepted by Worker' };
       case 'in-progress': return { bg: '#dbeafe', text: '#1e40af', icon: 'construct-outline',    label: 'Work in Progress' };
-      case 'closed':      return { bg: '#dcfce7', text: '#15803d', icon: 'checkmark-circle',     label: 'Resolved' };
+      case 'completed':   return { bg: '#dcfce7', text: '#15803d', icon: 'checkmark-circle',     label: 'Resolved' };
+      case 'incompleted': return { bg: '#fee2e2', text: '#b91c1c', icon: 'close-circle',         label: 'Marked Incomplete' };
       default:            return { bg: '#f1f5f9', text: '#475569', icon: 'help-circle-outline',  label: status };
     }
   };
@@ -257,7 +156,7 @@ export default function ComplaintDetailScreen({ route, navigation }) {
     );
   }
 
-  const statusInfo = getStatusColor(complaint.status);
+  const statusInfo = getStatusColor(getDisplayStatus(complaint));
   const daysSince = Math.floor((Date.now() - new Date(complaint.createdAt)) / (1000 * 60 * 60 * 24));
 
   return (
@@ -291,13 +190,13 @@ export default function ComplaintDetailScreen({ route, navigation }) {
           </LinearGradient>
         </View>
 
-        {/* Issue Type & Timing */}
+        {/* Department & Timing */}
         <View style={styles.infoCard}>
           <View style={styles.infoRow}>
             <View style={styles.infoIcon}><Ionicons name="alert-circle" size={20} color="#2563eb" /></View>
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Issue Type</Text>
-              <Text style={styles.infoValue}>{complaint.issueType.toUpperCase()}</Text>
+              <Text style={styles.infoLabel}>Department</Text>
+              <Text style={styles.infoValue}>{getDepartmentName(complaint).toUpperCase()}</Text>
             </View>
           </View>
           <View style={styles.divider} />
@@ -367,7 +266,7 @@ export default function ComplaintDetailScreen({ route, navigation }) {
             <View style={styles.imagesGrid}>
               {complaint.images.map((img, i) => (
                 <TouchableOpacity key={i} style={styles.imageContainer} activeOpacity={0.8} onPress={() => setSelectedImageIndex(i)}>
-                  <Image source={{ uri: img }} style={styles.thumbnail} resizeMode="cover" />
+                  <Image source={{ uri: getAssetUrl(img) }} style={styles.thumbnail} resizeMode="cover" />
                   <View style={styles.imageOverlay}><Ionicons name="expand-outline" size={20} color="#fff" /></View>
                 </TouchableOpacity>
               ))}
@@ -375,19 +274,19 @@ export default function ComplaintDetailScreen({ route, navigation }) {
           </View>
         )}
 
-        {/* Assigned Team */}
-        {complaint.assignedTaskId && (
+        {/* Assigned Task */}
+        {complaint.assignedTask && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="people" size={20} color="#334155" />
-              <Text style={styles.sectionTitle}>Assigned Team</Text>
+              <Text style={styles.sectionTitle}>Assigned Task</Text>
             </View>
             <View style={styles.teamCard}>
               <View style={styles.teamInfo}>
                 <View style={styles.teamAvatar}><Ionicons name="person" size={24} color="#2563eb" /></View>
                 <View style={styles.teamDetails}>
-                  <Text style={styles.teamName}>Municipal Team</Text>
-                  <Text style={styles.teamRole}>Civic Maintenance Division</Text>
+                  <Text style={styles.teamName}>Task #{String(complaint.assignedTask._id).slice(-6)}</Text>
+                  <Text style={styles.teamRole}>Status: {String(complaint.assignedTask.status).replace("-", " ")}</Text>
                 </View>
               </View>
             </View>
@@ -395,16 +294,18 @@ export default function ComplaintDetailScreen({ route, navigation }) {
         )}
 
         {/* Proof of Work */}
-        {complaint.status === "closed" && complaint.assignedTaskId?.proofImages && complaint.assignedTaskId.proofImages.length > 0 && (
+        {getDisplayStatus(complaint) === "completed" &&
+          complaint.assignedTask?.proofImages &&
+          complaint.assignedTask.proofImages.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="checkmark-done-circle" size={20} color="#15803d" />
               <Text style={[styles.sectionTitle, { color: '#15803d' }]}>Proof of Completion</Text>
             </View>
             <View style={styles.imagesGrid}>
-              {complaint.assignedTaskId.proofImages.map((img, i) => (
+              {complaint.assignedTask.proofImages.map((img, i) => (
                 <TouchableOpacity key={i} style={styles.imageContainer} activeOpacity={0.8}>
-                  <Image source={{ uri: img }} style={styles.thumbnail} resizeMode="cover" />
+                  <Image source={{ uri: getAssetUrl(img) }} style={styles.thumbnail} resizeMode="cover" />
                   <View style={[styles.imageOverlay, { backgroundColor: 'rgba(21, 128, 61, 0.7)' }]}>
                     <Ionicons name="checkmark-circle" size={20} color="#fff" />
                   </View>
@@ -428,17 +329,17 @@ export default function ComplaintDetailScreen({ route, navigation }) {
                 <View key={index} style={styles.timelineItem}>
                   <View style={[styles.timelineDot, {
                     backgroundColor:
-                      item.newStatus === "closed" || item.newStatus === "resolved" ? "#22c55e"
-                      : item.newStatus === "assigned"    ? "#3b82f6"
-                      : item.newStatus === "in-progress" ? "#f59e0b"
-                      : item.newStatus === "verified"    ? "#6366f1"
+                      item.status === "completed" ? "#22c55e"
+                      : item.status === "accepted" ? "#3b82f6"
+                      : item.status === "in-progress" ? "#f59e0b"
+                      : item.status === "incompleted" ? "#ef4444"
                       : "#94a3b8",
                   }]} />
                   <View style={styles.timelineContent}>
                     <Text style={styles.timelineTitle}>
-                      {(item.newStatus || item.actionType || "UPDATE").replace(/-/g, " ").toUpperCase()}
+                      {(item.status || item.type || "UPDATE").replace(/-/g, " ").toUpperCase()}
                     </Text>
-                    <Text style={styles.timelineDate}>{formatDate(item.createdAt)}</Text>
+                    <Text style={styles.timelineDate}>{formatDate(item.at)}</Text>
                   </View>
                 </View>
               ))
@@ -462,7 +363,7 @@ export default function ComplaintDetailScreen({ route, navigation }) {
                 <Ionicons name="person-circle" size={28} color="#64748b" />
                 <View style={{ marginLeft: 10, flex: 1 }}>
                   <Text style={styles.commentAuthor}>{comment.userId?.name || "Citizen"}</Text>
-                  <Text style={styles.commentText}>{comment.text}</Text>
+                  <Text style={styles.commentText}>{comment.commentText}</Text>
                   <Text style={styles.commentTime}>{formatDate(comment.createdAt)}</Text>
                 </View>
               </View>

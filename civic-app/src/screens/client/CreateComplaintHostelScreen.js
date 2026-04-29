@@ -17,6 +17,7 @@ import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import RNPickerSelect from "react-native-picker-select";
 import { ISSUE_TYPES, HOSTEL_NAMES } from "../../utils/constants";
+import { getDepartments } from "../../api/department.api";
 import {
   validateComplaintForm,
   getErrorMessages,
@@ -28,7 +29,8 @@ export default function CreateComplaintHostelScreen({ navigation }) {
   const [hostelName, setHostelName] = useState(null);
   const [floor, setFloor] = useState("");
   const [roomNumber, setRoomNumber] = useState("");
-  const [issueType, setIssueType] = useState(null);
+  const [departmentId, setDepartmentId] = useState(null);
+  const [departmentItems, setDepartmentItems] = useState(ISSUE_TYPES);
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState(null);
   const [images, setImages] = useState([]);
@@ -54,6 +56,19 @@ export default function CreateComplaintHostelScreen({ navigation }) {
         Alert.alert("Location Error", "Unable to get current location");
       }
       setLoadingLocation(false);
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const depts = await getDepartments();
+        if (depts?.length) {
+          setDepartmentItems(depts.map((d) => ({ label: d.name.toUpperCase(), value: d._id })));
+        }
+      } catch (e) {
+        // fallback to ISSUE_TYPES
+      }
     })();
   }, []);
 
@@ -109,7 +124,7 @@ export default function CreateComplaintHostelScreen({ navigation }) {
       hostelName,
       floor,
       roomNumber,
-      issueType,
+      departmentId,
       description,
     };
 
@@ -131,7 +146,8 @@ export default function CreateComplaintHostelScreen({ navigation }) {
     submitData.append("hostelName", hostelName);
     submitData.append("floor", floor);
     submitData.append("roomNumber", roomNumber);
-    submitData.append("issueType", issueType);
+    submitData.append("visibility", "private");
+    submitData.append("departmentId", departmentId);
     submitData.append("description", description);
     submitData.append(
       "location",
@@ -245,17 +261,17 @@ export default function CreateComplaintHostelScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Issue Type */}
+        {/* Department */}
         <View style={styles.section}>
           <Text style={styles.label}>
-            <Ionicons name="alert-circle" size={16} color="#334155" /> Issue Type *
+            <Ionicons name="alert-circle" size={16} color="#334155" /> Department *
           </Text>
           <View style={styles.pickerWrapper}>
             <RNPickerSelect
-              onValueChange={(value) => setIssueType(value)}
-              items={ISSUE_TYPES}
+              onValueChange={(value) => setDepartmentId(value)}
+              items={departmentItems}
               placeholder={{
-                label: "Select issue type...",
+                label: "Select department...",
                 value: null,
                 color: "#94a3b8",
               }}

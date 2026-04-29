@@ -1,8 +1,8 @@
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 
-import WorkerNavigator from "./WorkerNavigator";
-import ClientNavigator from "./ClientNavigator";
+import WorkerNavigator from "./WorkerNavigatior";
+import ClientNavigator from "./ClientNavigatior";
 import AuthNavigator from "./AuthNavigator";
 
 export default function RootNavigator() {

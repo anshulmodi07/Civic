@@ -14,25 +14,48 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import StatusBadge from "@/src/components/StatusBadge";
-import { getComplaintById, toggleUpvote } from "@/src/api/complaint.api";
-import api from "@/src/api/axios";
+import { getAssetUrl, getComplaintById, toggleUpvote } from "@/src/api/complaint.api";
 
 type Complaint = {
   _id: string;
   type: "hostel" | "campus";
-  issueType: string;
+  departmentId?: string | { _id: string; name: string };
+  departmentName?: string;
   description: string;
   status: string;
-  upvotes: number;
+  assignedTask?: {
+    status?: string;
+    notes?: string;
+    history?: { status: string; changedAt?: string; note?: string }[];
+    proofImages?: string[];
+  };
+  upvotes?: number;
+  upvotesCount?: number;
+  hasUpvoted?: boolean;
   createdAt: string;
   images?: string[];
   location?: { lat: number; lng: number };
   hostelName?: string;
-  floor?: number;
+  floor?: string;
   roomNumber?: string;
-  locationLandmark?: string;
+  landmark?: string;
+  area?: string;
   locationAddress?: string;
+  visibility?: "public" | "private";
 };
+
+const getDepartmentName = (complaint: Complaint) => {
+  if (complaint.departmentName) return complaint.departmentName;
+  const dept = complaint.departmentId;
+  if (!dept) return "";
+  return typeof dept === "string" ? dept : dept.name || "";
+};
+
+const getDisplayStatus = (complaint: Complaint) =>
+  complaint.assignedTask?.status || complaint.status || "pending";
+
+const getSupportCount = (complaint: Complaint) =>
+  complaint.upvotesCount ?? complaint.upvotes ?? 0;
 
 export default function ComplaintDetail() {
   const router = useRouter();
@@ -50,10 +73,7 @@ export default function ComplaintDetail() {
       try {
         const response = await getComplaintById(Array.isArray(id) ? id[0] : id);
         setComplaint(response);
-        
-        // Check if user has already upvoted (from localStorage in real app)
-        // For now, default to false
-        setHasUpvoted(false);
+        setHasUpvoted(Boolean(response?.hasUpvoted));
       } catch (error) {
         console.log("Complaint detail error:", error);
       } finally {
@@ -70,7 +90,7 @@ export default function ComplaintDetail() {
     setIsUpvoting(true);
     try {
       const result = await toggleUpvote(complaint._id);
-      setComplaint(prev => prev ? { ...prev, upvotes: result.upvotes } : null);
+      setComplaint(prev => prev ? { ...prev, upvotes: result.upvotes, upvotesCount: result.upvotes } : null);
       setHasUpvoted(result.upvoted);
       Alert.alert("Success", "Thank you for your support!", [{ text: "OK" }]);
     } catch (error: any) {
@@ -84,13 +104,23 @@ export default function ComplaintDetail() {
   const getIssueIcon = (issueType: string) => {
     const iconMap: Record<string, string> = {
       electrician: "flash",
-      ac: "snow",
       plumber: "water",
-      construction: "hammer",
-      sanitation: "trash",
+      civil: "hammer",
+      carpenter: "construct",
       wifi: "wifi",
     };
     return iconMap[issueType] || "alert-circle";
+  };
+
+  const getTimelineSteps = (status: string) => {
+    if (status === "incompleted") return ["pending", "accepted", "in-progress", "incompleted"];
+    return ["pending", "accepted", "in-progress", "completed"];
+  };
+
+  const isStepActive = (steps: string[], currentStatus: string, step: string) => {
+    const currentIndex = steps.indexOf(currentStatus);
+    const stepIndex = steps.indexOf(step);
+    return currentIndex >= stepIndex && stepIndex >= 0;
   };
 
   const timeAgo = (date: string) => {
@@ -120,6 +150,12 @@ export default function ComplaintDetail() {
     );
   }
 
+  const departmentName = getDepartmentName(complaint);
+  const displayStatus = getDisplayStatus(complaint);
+  const supportCount = getSupportCount(complaint);
+  const timelineSteps = getTimelineSteps(displayStatus);
+  const history = complaint.assignedTask?.history || [];
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -139,10 +175,10 @@ export default function ComplaintDetail() {
         <View style={styles.card}>
           <View style={styles.headerContent}>
             <View style={styles.issueTypeContainer}>
-              <Ionicons name={getIssueIcon(complaint.issueType) as any} size={22} color="#2563eb" />
-              <Text style={styles.issueType}>{complaint.issueType}</Text>
+              <Ionicons name={getIssueIcon(departmentName) as any} size={22} color="#2563eb" />
+              <Text style={styles.issueType}>{departmentName || "Department"}</Text>
             </View>
-            <StatusBadge status={complaint.status} />
+            <StatusBadge status={displayStatus} />
           </View>
 
           <Text style={styles.description}>{complaint.description}</Text>
@@ -171,7 +207,7 @@ export default function ComplaintDetail() {
               color={hasUpvoted ? "#fff" : "#06b6d4"}
             />
             <Text style={[styles.upvoteText, hasUpvoted && styles.upvoteTextActive]}>
-              {complaint.upvotes} {complaint.upvotes === 1 ? "Support" : "Supports"}
+              {supportCount} {supportCount === 1 ? "Support" : "Supports"}
             </Text>
             {isUpvoting && <ActivityIndicator color="#06b6d4" style={{ marginLeft: 8 }} />}
           </TouchableOpacity>
@@ -194,14 +230,20 @@ export default function ComplaintDetail() {
               </View>
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Room Number</Text>
-                <Text style={styles.detailValue}>{complaint.roomNumber || "N/A"}</Text>
+                <Text style={styles.detailValue}>
+                  {complaint.visibility === "private" ? complaint.roomNumber || "N/A" : "Public area"}
+                </Text>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Landmark</Text>
+                <Text style={styles.detailValue}>{complaint.landmark || "N/A"}</Text>
               </View>
             </>
           ) : (
             <>
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Landmark / Area</Text>
-                <Text style={styles.detailValue}>{complaint.locationLandmark || "N/A"}</Text>
+                <Text style={styles.detailValue}>{complaint.area || "N/A"}</Text>
               </View>
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Address</Text>
@@ -225,11 +267,24 @@ export default function ComplaintDetail() {
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imagesScroll}>
               {complaint.images.map((img, index) => (
-                <Image key={index} source={{ uri: img }} style={styles.thumbnail} />
+                <Image key={index} source={{ uri: getAssetUrl(img) }} style={styles.thumbnail} />
               ))}
             </ScrollView>
           </View>
         )}
+
+        {displayStatus === "completed" && complaint.assignedTask?.proofImages?.length ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              <Ionicons name="checkmark-done" size={16} color="#15803d" /> Proof of Completion
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imagesScroll}>
+              {complaint.assignedTask.proofImages.map((img, index) => (
+                <Image key={index} source={{ uri: getAssetUrl(img) }} style={styles.thumbnail} />
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
 
         {/* Status Timeline */}
         <View style={styles.section}>
@@ -237,33 +292,43 @@ export default function ComplaintDetail() {
             <Ionicons name="list" size={16} color="#334155" /> Status
           </Text>
           <View style={styles.statusTimeline}>
-            {["pending", "in_progress", "resolved"].map((status, index) => (
+            {timelineSteps.map((status, index) => (
               <View key={status} style={styles.timelineItem}>
                 <View
                   style={[
                     styles.timelineCircle,
-                    (complaint.status === status || 
-                      (complaint.status === "resolved") ||
-                      (complaint.status === "in_progress" && status !== "resolved"))
+                    isStepActive(timelineSteps, displayStatus, status)
                       ? styles.timelineCircleActive
                       : styles.timelineCircleInactive,
+                    status === "incompleted" && isStepActive(timelineSteps, displayStatus, status)
+                      ? styles.timelineCircleError
+                      : null,
                   ]}
                 >
-                  {(complaint.status === status || 
-                    (complaint.status === "resolved") ||
-                    (complaint.status === "in_progress" && status !== "resolved")) && (
+                  {isStepActive(timelineSteps, displayStatus, status) && (
                     <Ionicons name="checkmark" size={16} color="#fff" />
                   )}
                 </View>
-                {index < 2 && <View style={styles.timelineLine} />}
+                {index < timelineSteps.length - 1 && <View style={styles.timelineLine} />}
               </View>
             ))}
           </View>
           <View style={styles.statusLabels}>
-            <Text style={styles.statusLabel}>Pending</Text>
-            <Text style={styles.statusLabel}>In Progress</Text>
-            <Text style={styles.statusLabel}>Resolved</Text>
+            {timelineSteps.map((status) => (
+              <Text key={status} style={styles.statusLabel}>{status.replace("-", " ")}</Text>
+            ))}
           </View>
+          {history.length ? (
+            <View style={styles.historyList}>
+              {history.map((item, index) => (
+                <View key={`${item.status}-${index}`} style={styles.historyItem}>
+                  <Text style={styles.historyTitle}>{item.status.replace("-", " ")}</Text>
+                  {item.changedAt ? <Text style={styles.historyDate}>{timeAgo(item.changedAt)}</Text> : null}
+                  {item.note ? <Text style={styles.historyNote}>{item.note}</Text> : null}
+                </View>
+              ))}
+            </View>
+          ) : null}
         </View>
       </ScrollView>
     </View>
@@ -336,10 +401,16 @@ const styles = StyleSheet.create({
   timelineItem: { alignItems: "center", flex: 1 },
   timelineCircle: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", borderWidth: 2 },
   timelineCircleActive: { backgroundColor: "#22c55e", borderColor: "#16a34a" },
+  timelineCircleError: { backgroundColor: "#ef4444", borderColor: "#dc2626" },
   timelineCircleInactive: { backgroundColor: "#f1f5f9", borderColor: "#cbd5e1" },
   timelineLine: { height: 2, backgroundColor: "#cbd5e1", flex: 0.8, marginHorizontal: 8 },
   statusLabels: { flexDirection: "row", justifyContent: "space-around", marginTop: 8 },
   statusLabel: { fontSize: 12, color: "#64748b", fontWeight: "600", textTransform: "capitalize" },
+  historyList: { marginTop: 18, borderTopWidth: 1, borderTopColor: "#f1f5f9", paddingTop: 12 },
+  historyItem: { paddingVertical: 8 },
+  historyTitle: { fontSize: 13, color: "#334155", fontWeight: "700", textTransform: "capitalize" },
+  historyDate: { fontSize: 12, color: "#64748b", marginTop: 2 },
+  historyNote: { fontSize: 13, color: "#475569", marginTop: 4 },
   center: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#f8fafc" },
   errorText: { fontSize: 16, fontWeight: "700", color: "#ef4444", marginTop: 12 },
 });

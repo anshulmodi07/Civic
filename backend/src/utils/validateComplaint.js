@@ -1,4 +1,8 @@
 export const validateComplaint = (data) => {
+  if (!["hostel", "campus"].includes(data.type)) {
+    throw new Error("Complaint type must be hostel or campus");
+  }
+
   if (!data.description || data.description.length < 20) {
     throw new Error("Description must be at least 20 characters");
   }
@@ -11,9 +15,14 @@ export const validateComplaint = (data) => {
     throw new Error("Department is required");
   }
 
-  if (!data.location?.lat || !data.location?.lng) {
+  if (!Number.isFinite(Number(data.location?.lat)) || !Number.isFinite(Number(data.location?.lng))) {
     throw new Error("Location is required");
   }
+
+  data.location = {
+    lat: Number(data.location.lat),
+    lng: Number(data.location.lng),
+  };
 
   if (data.type === "hostel") {
     if (!data.hostelName || !data.floor) {

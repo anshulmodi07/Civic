@@ -11,15 +11,15 @@ import {
   Animated,
   Platform,
 } from "react-native";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import { LinearGradient } from "expo-linear-gradient";
-import type { ComponentProps } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import RNPickerSelect from "react-native-picker-select";
 import { ISSUE_TYPES, LOCATION_LANDMARKS } from "@/src/utils/constants";
+import { getDepartments } from "@/src/api/department.api";
 
 // ✅ Corrected import path: complaint_api (underscore), not complaint.api (dot)
 
@@ -182,6 +182,7 @@ export default function CreateComplaintCampus() {
   const [area, setArea] = useState<string | null>(null);           // was: locationLandmark
   const [locationAddress, setLocationAddress] = useState("");
   const [departmentId, setDepartmentId] = useState<string | null>(null); // was: issueType
+  const [departmentItems, setDepartmentItems] = useState(ISSUE_TYPES);
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
 
@@ -215,7 +216,24 @@ export default function CreateComplaintCampus() {
       }),
     ]).start();
     fetchGps();
+    loadDepartments();
   }, []);
+
+  const loadDepartments = async () => {
+    try {
+      const departments = await getDepartments();
+      if (departments?.length) {
+        setDepartmentItems(
+          departments.map((dept: any) => ({
+            label: String(dept.name).toUpperCase(),
+            value: dept._id,
+          }))
+        );
+      }
+    } catch (err) {
+      console.warn("Departments fallback:", err);
+    }
+  };
 
   // ── GPS ──────────────────────────────────────────────────────────────────────
   const fetchGps = async () => {
@@ -487,7 +505,7 @@ export default function CreateComplaintCampus() {
                 setDepartmentId(v);
                 setFieldErrors((e) => ({ ...e, departmentId: null }));
               }}
-              items={ISSUE_TYPES}
+              items={departmentItems}
               placeholder={{ label: "Select issue type…", value: null }}
               style={pickerStyle}
               useNativeAndroidPickerStyle={false}

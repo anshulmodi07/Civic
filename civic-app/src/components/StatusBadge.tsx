@@ -10,7 +10,8 @@ type StatusKey =
   | "accepted"
   | "in-progress"
   | "completed"
-  | "incomplete";
+  | "incomplete"
+  | "incompleted";
 
 /* ✅ STEP 2: Strongly type config */
 const STATUS_CONFIG: Record<
@@ -76,6 +77,13 @@ const STATUS_CONFIG: Record<
     label: "Completed",
   },
   incomplete: {
+    bg: "#fee2e2",
+    text: "#991b1b",
+    border: "#fecaca",
+    icon: "close-circle-outline",
+    label: "Incomplete",
+  },
+  incompleted: {
     bg: "#fee2e2",
     text: "#991b1b",
     border: "#fecaca",

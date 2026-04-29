@@ -56,7 +56,7 @@ export default function IncompleteTasks() {
 
       {item.note && (
         <View style={styles.noteBox}>
-          <Text style={styles.noteLabel}>Worker's note</Text>
+          <Text style={styles.noteLabel}>Worker&apos;s note</Text>
           <Text style={styles.noteText}>{item.note}</Text>
         </View>
       )}

@@ -1,12 +1,21 @@
 import { useEffect, useState } from "react";
 import { View, ActivityIndicator, StyleSheet, Text, FlatList } from "react-native";
-import { getNearbyComplaints } from "@/src/api/complaint.api";
+import * as Location from "expo-location";
+import { getAllComplaints, getNearbyComplaints } from "@/src/api/complaint.api";
 
 type Complaint = {
   _id: string;
-  issueType: string;
+  departmentId?: string | { _id: string; name: string };
+  departmentName?: string;
   description: string;
   location: { lat: number; lng: number };
+};
+
+const getDepartmentName = (complaint: Complaint) => {
+  if (complaint.departmentName) return complaint.departmentName;
+  const dept = complaint.departmentId;
+  if (!dept) return "";
+  return typeof dept === "string" ? dept : dept.name || "";
 };
 
 export default function ComplaintMap() {
@@ -16,7 +25,19 @@ export default function ComplaintMap() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const nearby = await getNearbyComplaints();
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === "granted") {
+          const current = await Location.getCurrentPositionAsync({});
+          const nearby = await getNearbyComplaints(
+            current.coords.latitude,
+            current.coords.longitude,
+            5
+          );
+          setComplaints(nearby || []);
+          return;
+        }
+
+        const nearby = await getAllComplaints();
         setComplaints(nearby);
       } catch (error) {
         console.log("Map load error:", error);
@@ -47,7 +68,7 @@ export default function ComplaintMap() {
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <Text style={styles.issueType}>{item.issueType.toUpperCase()}</Text>
+            <Text style={styles.issueType}>{(getDepartmentName(item) || "Department").toUpperCase()}</Text>
             <Text style={styles.description}>{item.description}</Text>
             <Text style={styles.locationText}>
               {item.location.lat.toFixed(4)}, {item.location.lng.toFixed(4)}

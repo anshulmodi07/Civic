@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 import Worker from "./src/models/worker.js";
 import Admin from "./src/models/admin.js";
 import Department from "./src/models/department.js";
-import Complaint from "./src/models/complaint.js";
+import Complaint from "./src/models/Complaint.js";
 import User from "./src/models/user.js";
 import ShiftHistory from "./src/models/shift.js";
 

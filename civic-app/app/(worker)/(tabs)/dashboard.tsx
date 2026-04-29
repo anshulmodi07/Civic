@@ -55,7 +55,7 @@ export default function Dashboard() {
 
       {/* SHIFT CARD */}
       <View style={styles.shiftCard}>
-        <Text style={styles.shiftLabel}>Today's shift</Text>
+        <Text style={styles.shiftLabel}>Today&apos;s shift</Text>
         <View style={styles.shiftRow}>
           <Text style={styles.shiftName}>{todayShift.toUpperCase()}</Text>
           <View style={styles.shiftTimePill}>

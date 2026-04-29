@@ -77,7 +77,7 @@ export default function RaiseComplaint() {
         <View style={fs.infoBanner}>
           <Ionicons name="information-circle-outline" size={18} color={C.accent} />
           <Text style={fs.infoText}>
-            Choose the type of issue you'd like to report below.
+            Choose the type of issue you&apos;d like to report below.
           </Text>
         </View>
 

@@ -93,19 +93,26 @@ export const validateComplaintForm = (data) => {
 
   // For campus complaints
   if (data.type === "campus") {
-    if (!data.locationLandmark && !data.locationAddress) {
+    if (!data.area && !data.locationLandmark) {
       issues.push({
         type: "MISSING_LOCATION",
-        message: "Please select a landmark or enter an address",
+        message: "Please select a landmark or area",
+        severity: "error",
+      });
+    }
+    if (!data.locationAddress) {
+      issues.push({
+        type: "MISSING_ADDRESS",
+        message: "Please enter the address or additional location details",
         severity: "error",
       });
     }
   }
 
-  if (!data.issueType) {
+  if (!data.departmentId && !data.issueType) {
     issues.push({
-      type: "MISSING_ISSUE_TYPE",
-      message: "Please select an issue type",
+      type: "MISSING_DEPARTMENT",
+      message: "Please select a department",
       severity: "error",
     });
   }

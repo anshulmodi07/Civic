@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 // import { getMyTasks } from "../../api/task.api";
-import TaskCard from "../../components/Taskcard";
+import TaskCard from "../../components/TaskCard";
 import api from "../../api/axios";
 
 const MOCK_TASKS = [

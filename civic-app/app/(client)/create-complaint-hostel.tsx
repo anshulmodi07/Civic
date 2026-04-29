@@ -27,6 +27,7 @@ import * as ImagePicker from "expo-image-picker";
 import RNPickerSelect from "react-native-picker-select";
 import { HOSTEL_NAMES, ISSUE_TYPES } from "@/src/utils/constants";
 import { createComplaint } from "@/src/api/complaint.api";
+import { getDepartments } from "@/src/api/department.api";
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 const C = {
@@ -193,7 +194,7 @@ function ChipRow({
   onSelect,
   color,
 }: {
-  items: Array<{ label: string; value: string | null }>;
+  items: { label: string; value: string | null }[];
   selected: string;
   onSelect: (value: string | null) => void;
   color: string;
@@ -270,6 +271,7 @@ export default function CreateComplaintHostel() {
   const [roomNumber,   setRoomNumber]   = useState("");   // only when private
   const [landmark,     setLandmark]     = useState("");   // only when public
   const [departmentId, setDepartmentId] = useState<string | null>(null);
+  const [departmentItems, setDepartmentItems] = useState(ISSUE_TYPES);
   const [description,  setDescription]  = useState("");
   const [images,       setImages]       = useState<ImagePicker.ImagePickerAsset[]>([]);
 
@@ -290,7 +292,24 @@ export default function CreateComplaintHostel() {
       Animated.timing(slideAnim, { toValue: 0, duration: 420, useNativeDriver: true }),
     ]).start();
     fetchGps();
+    loadDepartments();
   }, []);
+
+  const loadDepartments = async () => {
+    try {
+      const departments = await getDepartments();
+      if (departments?.length) {
+        setDepartmentItems(
+          departments.map((dept: any) => ({
+            label: String(dept.name).toUpperCase(),
+            value: dept._id,
+          }))
+        );
+      }
+    } catch (err) {
+      console.warn("Departments fallback:", err);
+    }
+  };
 
   // ── GPS ─────────────────────────────────────────────────────────────────────
   const fetchGps = async () => {
@@ -635,7 +654,7 @@ export default function CreateComplaintHostel() {
                 setDepartmentId(v);
                 setFieldErrors((e) => ({ ...e, departmentId: null }));
               }}
-              items={ISSUE_TYPES}
+              items={departmentItems}
               placeholder={{ label: "Select responsible department…", value: null }}
               style={pickerStyle}
               useNativeAndroidPickerStyle={false}
