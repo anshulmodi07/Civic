@@ -2,7 +2,7 @@ import Worker from "../models/worker.js";
 import Admin from "../models/admin.js";
 import User from "../models/user.js";
 
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { OAuth2Client } from "google-auth-library";
 import { generateToken } from "../utils/jwt.js";
 
@@ -34,6 +34,7 @@ export const loginWorker = async (req, res) => {
         id: worker._id,
         name: worker.name,
         email: worker.email,
+        role: "worker",
       },
     });
 
@@ -116,5 +117,33 @@ export const googleLogin = async (req, res) => {
   } catch (error) {
     console.error(error); //
     res.status(401).json({ message: "Google auth failed" });
+  }
+};
+
+// 🔥 SIMPLE USER LOGIN (FALLBACK/DEMO)
+export const loginUser = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.create({ email, name: email.split("@")[0] });
+    }
+
+    const token = generateToken(user._id, "user");
+
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: "user",
+      },
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

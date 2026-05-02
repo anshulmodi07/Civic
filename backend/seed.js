@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 import Worker from "./src/models/worker.js";
 import Admin from "./src/models/admin.js";
@@ -48,12 +48,12 @@ const seedData = async () => {
         dateOfJoining: new Date("2024-01-15"),
       },
       {
-  name: "Worker Wifi 2",
-  email: "wifi2@nitdelhi.ac.in",
-  password: hashedPassword,
-  departmentId: departments.find(d => d.name === "wifi")._id,
-  dateOfJoining: new Date("2024-02-01"),
-},
+        name: "Worker Wifi 2",
+        email: "wifi2@nitdelhi.ac.in",
+        password: hashedPassword,
+        departmentId: departments.find(d => d.name === "wifi")._id,
+        dateOfJoining: new Date("2024-02-01"),
+      },
       {
         name: "Worker Plumber",
         email: "plumber@nitdelhi.ac.in",
@@ -94,10 +94,13 @@ const seedData = async () => {
         hostelName: "Dhaula",
         floor: "2",
         roomNumber: "203",
-        description: "AC not working properly in room.",
+        description: "AC not working properly in room, temperature not cooling at all.",
+        issueType: "ac",
         departmentId: departments.find(d => d.name === "electrician")._id,
         status: "pending",
         location: { lat: 28.545, lng: 77.192 },
+        supporters: [],
+        comments: [],
         images: [],
       },
       {
@@ -105,10 +108,13 @@ const seedData = async () => {
         type: "campus",
         area: "Main Gate",
         locationAddress: "Near college road",
-        description: "Street light not working.",
+        description: "Street light not working near main gate area since last week.",
+        issueType: "electrician",
         departmentId: departments.find(d => d.name === "electrician")._id,
         status: "pending",
         location: { lat: 28.546, lng: 77.193 },
+        supporters: [],
+        comments: [],
         images: [],
       },
       {
@@ -118,10 +124,13 @@ const seedData = async () => {
         hostelName: "Dhaula",
         floor: "1",
         landmark: "Near stairs",
-        description: "WiFi not working in hostel area.",
+        description: "WiFi not working in hostel area, students unable to attend online classes.",
+        issueType: "wifi",
         departmentId: departments.find(d => d.name === "wifi")._id,
         status: "pending",
         location: { lat: 28.547, lng: 77.194 },
+        supporters: [],
+        comments: [],
         images: [],
       },
     ]);

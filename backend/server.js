@@ -14,6 +14,7 @@ import "./src/models/shift.js";
 import authRoutes from "./src/routes/auth.routes.js";
 import taskRoutes from "./src/routes/task.routes.js";
 import workerRoutes from "./src/routes/worker.routes.js";
+import complaintRoutes from "./src/routes/complaint.routes.js";
 
 dotenv.config();
 
@@ -29,9 +30,10 @@ app.get("/", (req, res) => {
 });
 
 // 🔥 ROUTES
-app.use("/api/auth", authRoutes);   // <-- fix also here (see below)
+app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/workers", workerRoutes);
+app.use("/api/complaints", complaintRoutes);
 
 const PORT = process.env.PORT || 3000;
 

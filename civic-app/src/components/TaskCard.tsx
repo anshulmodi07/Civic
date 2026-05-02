@@ -9,6 +9,11 @@ type Props = {
 };
 
 export default function TaskCard({ task, onPress }: Props) {
+  const complaint =
+    task.complaintId && typeof task.complaintId === "object"
+      ? task.complaintId
+      : undefined;
+
   return (
     <TouchableOpacity
       style={[
@@ -31,19 +36,19 @@ export default function TaskCard({ task, onPress }: Props) {
           {task.type === "campus" ? (
             <>
               <Text style={styles.subText}>
-                📍 {task.landmark || "Location"}
+                📍 {complaint?.landmark || task.landmark || "Location"}
               </Text>
               <Text style={styles.subText}>
-                🏠 {task.address || "Address"}
+                🏠 {complaint?.address || task.address || "Address"}
               </Text>
             </>
           ) : (
             <>
               <Text style={styles.subText}>
-                🏢 {task.hostelName || "Hostel"}
+                🏢 {complaint?.hostelName || task.hostelName || "Hostel"}
               </Text>
               <Text style={styles.subText}>
-                📍 Floor {task.floor || "-"} | Room {task.room || "-"}
+                📍 Floor {complaint?.floor || task.floor || "-"} | Room {complaint?.room || task.room || "-"}
               </Text>
             </>
           )}

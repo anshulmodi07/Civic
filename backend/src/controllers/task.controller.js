@@ -32,7 +32,8 @@ export const getMyTasks = async (req, res) => {
     }
 
     const tasks = await Task.find(filter)
-      .populate("complaintId");
+      .populate("complaintId")
+      .sort({ createdAt: -1 });
 
     res.json(tasks);
 
@@ -53,9 +54,20 @@ export const getAvailableTasks = async (req, res) => {
       return res.status(404).json({ message: "Worker not found" });
     }
 
+
+    const existingTaskComplaintIds = await Task.find({
+    
+      status: { $in: ["accepted", "in-progress"] },
+    }).distinct("complaintId");
+
+    console.log("USER ID:", workerId);
+console.log("WORKER:", worker);
+console.log("FILTER IDs:", existingTaskComplaintIds);
+
     const complaints = await Complaint.find({
       status: "pending",
       departmentId: worker.departmentId,
+      _id: { $nin: existingTaskComplaintIds },
     });
 
     res.json(complaints);
@@ -69,6 +81,9 @@ export const getAvailableTasks = async (req, res) => {
 // 🔥 2. ACCEPT TASK
 export const acceptTask = async (req, res) => {
   try {
+    console.log("PARAMS:", req.params);
+    console.log("USER:", req.user);
+
     const { complaintId } = req.params;
     const workerId = req.user.id;
 
@@ -76,19 +91,28 @@ export const acceptTask = async (req, res) => {
       return res.status(400).json({ message: "Complaint ID missing" });
     }
 
+    // 🔹 1. Find complaint
     const complaint = await Complaint.findById(complaintId);
+    console.log("Complaint:", complaint);
 
-    if (!complaint || complaint.status !== "pending") {
+    if (!complaint) {
+      return res.status(404).json({ message: "Complaint not found" });
+    }
+
+    if (complaint.status !== "pending") {
       return res.status(400).json({ message: "Not available" });
     }
 
-    // ❌ prevent duplicate
+    // 🔹 2. Check existing task
     const existingTask = await Task.findOne({ complaintId });
+    console.log("Existing Task:", existingTask);
 
+    // 🔥 FIX: reuse instead of throwing error
     if (existingTask) {
-      return res.status(400).json({ message: "Task already accepted" });
+      return res.status(200).json(existingTask);
     }
 
+    // 🔹 3. Create task
     const task = await Task.create({
       complaintId,
       workerId,
@@ -101,18 +125,18 @@ export const acceptTask = async (req, res) => {
       ],
     });
 
-    // assign worker
+    // 🔹 4. Update complaint
     complaint.assignedWorkerId = workerId;
+    complaint.status = "accepted";
     await complaint.save();
 
     res.json(task);
 
   } catch (err) {
+    console.log("ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
-
-
 
 
 
@@ -206,12 +230,11 @@ export const completeTask = async (req, res) => {
 export const markIncomplete = async (req, res) => {
   try {
     const { taskId } = req.params;
-    const { notes } = req.body || {};
+    const { comment, notes } = req.body || {};
     const workerId = req.user.id;
+    const noteText = comment || notes;
 
     const task = await Task.findById(taskId);
-
-    
 
     if (!task || task.workerId.toString() !== workerId) {
       return res.status(403).json({ message: "Unauthorized" });
@@ -220,15 +243,15 @@ export const markIncomplete = async (req, res) => {
     if (task.status !== "in-progress") {
       return res.status(400).json({ message: "Task not in progress" });
     }
-    if (!notes || notes.trim() === "") {
-  return res.status(400).json({
-    message: "Reason (notes) is required for incomplete task",
-  });
-}
+    if (!noteText || noteText.trim() === "") {
+      return res.status(400).json({
+        message: "Reason is required for incomplete task",
+      });
+    }
 
     task.status = "incompleted";
     task.incompletedAt = new Date();
-    task.notes = notes;
+    task.notes = noteText;
 
     task.history.push({
       status: "incompleted",

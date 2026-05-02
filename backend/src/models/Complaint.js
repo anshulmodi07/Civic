@@ -72,18 +72,79 @@ const complaintSchema = new mongoose.Schema(
       maxlength: 500,
     },
 
+    // Frontend sends issueType for categorization
+    issueType: {
+      type: String,
+      enum: [
+        "electrician",
+        "plumber",
+        "ac",
+        "wifi",
+        "sanitation",
+        "construction",
+        "pest_control",
+        "furniture",
+        "other",
+      ],
+    },
+
+    priority: {
+      type: String,
+      enum: ["low", "medium", "high"],
+      default: "medium",
+    },
+
     departmentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Department",
-      required: true,
       index: true,
     },
 
     status: {
       type: String,
-      enum: ["pending","completed", "incompleted"],
+      enum: [
+        "new",
+        "pending",
+        "assigned",
+        "accepted",
+        "in-progress",
+        "completed",
+        "incompleted",
+        "closed",
+      ],
       default: "pending",
       index: true,
+    },
+
+    // Upvote/support tracking
+    supporters: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
+    // Comments on the complaint
+    comments: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        text: { type: String, required: true },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+
+    // Worker assignment
+    assignedWorkerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Worker",
+    },
+
+    assignedTaskId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Task",
     },
 
     location: {

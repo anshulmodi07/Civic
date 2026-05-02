@@ -7,8 +7,9 @@ import { ScrollView } from "react-native";
 import { AuthContext } from "@/src/context/AuthContext";
 
 const DEMO_CLIENT_EMAIL = "demo@civicmitra.com";
-const DEMO_WORKER_EMAIL = "worker@demo.com";
-const DEMO_PASSWORD = "demo1234";
+const DEMO_WORKER_EMAIL = "wifi@nitdelhi.ac.in";
+const DEMO_PASSWORD = "123456";
+const DEMO_PASSWORD2 = "demo1234";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -17,18 +18,13 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [role, setRole] = useState("client");
+  const [role, setRole] = useState("worker");
 
   const handleLogin = async () => {
     setIsLoading(true);
 
     try {
-      await login({
-        email,
-        name: email,
-        role,
-        password,
-      });
+      await login(email, password, role);
     } catch (err) {
       const message = err.response?.data?.message || err.message || "Invalid credentials";
       Alert.alert("Login Failed", message.toString());
@@ -38,9 +34,13 @@ export default function LoginScreen() {
   };
 
   const fillDemoCredentials = () => {
-    const demoEmail = role === "worker" ? DEMO_WORKER_EMAIL : DEMO_CLIENT_EMAIL;
-    setEmail(demoEmail);
-    setPassword(DEMO_PASSWORD);
+    if (role === "client") {
+      setEmail("demo@civicmitra.com");
+      setPassword("123456");
+    } else {
+      setEmail("wifi@nitdelhi.ac.in");
+      setPassword("123456");
+    }
   };
 
   return (

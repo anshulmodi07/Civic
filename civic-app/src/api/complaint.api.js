@@ -538,7 +538,7 @@ export const getCitizenDashboard = async () => {
     };
   }
 
-  const response = await api.get("/dashboard/citizen");
+  const response = await api.get("/complaints/dashboard/citizen");
   return response.data;
 };
 

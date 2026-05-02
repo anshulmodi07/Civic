@@ -5,14 +5,12 @@ import {
   StyleSheet,
   ScrollView,
   StatusBar,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useState, useEffect } from "react";
+import { getMyProfile, getWorkerStats, getTodayShift } from "@/src/api/worker.api";
 
-const STATS = [
-  { label: "Assigned", value: "12", icon: "📋" },
-  { label: "Completed", value: "9", icon: "✅" },
-  { label: "Pending", value: "3", icon: "⏳" },
-];
 
 const MENU_ITEMS = [
   { icon: "👤", label: "Edit Profile", sub: "Update your name and details" },
@@ -23,6 +21,44 @@ const MENU_ITEMS = [
 
 export default function Profile() {
   const router = useRouter();
+  const [profile, setProfile] = useState<any>(null);
+  const [stats, setStats] = useState<any>(null);
+  const [shift, setShift] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [pData, sData, shData] = await Promise.all([
+          getMyProfile(),
+          getWorkerStats(),
+          getTodayShift()
+        ]);
+        setProfile(pData);
+        setStats(sData);
+        setShift(shData);
+      } catch (e) {
+        console.log("Error loading profile data", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+        <ActivityIndicator size="large" color="#3b82f6" />
+      </View>
+    );
+  }
+
+  const dynamicStats = [
+    { label: "Assigned", value: stats?.total || 0, icon: "📋" },
+    { label: "Completed", value: stats?.completed || 0, icon: "✅" },
+    { label: "Active", value: stats?.active || 0, icon: "⏳" },
+  ];
 
   return (
     <ScrollView
@@ -53,19 +89,19 @@ export default function Profile() {
           </View>
         </View>
 
-        <Text style={styles.name}>Rajesh Kumar</Text>
-        <Text style={styles.role}>Maintenance Staff · Electrical</Text>
+        <Text style={styles.name}>{profile?.name || "Worker Name"}</Text>
+        <Text style={styles.role}>{profile?.position || "Staff"} · {profile?.department || "Department"}</Text>
 
         {/* BADGE */}
         <View style={styles.shiftBadge}>
           <Text style={styles.shiftDot}>●</Text>
-          <Text style={styles.shiftText}>Morning Shift Active</Text>
+          <Text style={styles.shiftText}>{shift?.shift ? `${shift.shift.charAt(0).toUpperCase() + shift.shift.slice(1)} Shift Active` : "Off Duty"}</Text>
         </View>
       </View>
 
       {/* STATS ROW */}
       <View style={styles.statsRow}>
-        {STATS.map((s, i) => (
+        {dynamicStats.map((s, i) => (
           <View key={i} style={styles.statCard}>
             <Text style={styles.statIcon}>{s.icon}</Text>
             <Text style={styles.statNumber}>{s.value}</Text>

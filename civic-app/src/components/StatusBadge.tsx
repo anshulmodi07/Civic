@@ -59,7 +59,7 @@ const STATUS_CONFIG: Record<
     text: "#6d28d9",
     border: "#ddd6fe",
     icon: "checkmark-circle-outline",
-    label: "Accepted",
+    label: "Pending",
   },
   "in-progress": {
     bg: "#dbeafe",

@@ -1,36 +1,30 @@
-export type Task = {
-  id: string;
-  taskId?: string;
-  complaintId?: string;
-  workerId?: string;
+export type Complaint = {
+  _id: string;
   type: "campus" | "hostel";
-  issueType: string;
-  description?: string;
-
-  landmark?: string;
-  address?: string;
-
+  visibility?: "public" | "private";
   hostelName?: string;
   floor?: string;
-  room?: string;
+  roomNumber?: string;
+  landmark?: string;       // hostel public only
+  area?: string;           // campus only
+  locationAddress?: string; // campus only
+  description: string;
+  departmentId: string;
+  status: "pending" | "completed" | "incompleted";
+  images?: string[];
+  createdAt: string;
+};
 
-  image?: string;
-  reportedAt: string;
-
-  status:
-    | "pending"
-    | "accepted"
-    | "in-progress"
-    | "completed"
-    | "incomplete";
-
-  shift?: "morning" | "evening" | "night" | "off";
-
-  assignedAt?: string;
+export type Task = {
+  _id: string;
+  complaintId: Complaint;  // always populated
+  workerId: string;
+  status: "accepted" | "in-progress" | "completed" | "incompleted";
   acceptedAt?: string;
   startedAt?: string;
   completedAt?: string;
-
-  note?: string;
-  completedImage?: string;
+  incompletedAt?: string;
+  proofImages?: string[];
+  notes?: string;
+  createdAt: string;
 };
