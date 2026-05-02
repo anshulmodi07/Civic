@@ -31,21 +31,6 @@ export const S = {
     fontSize: "13px", color: "#94A3B8", fontWeight: 500,
   },
 
-  // Search
-  searchWrap: {
-    display: "flex", alignItems: "center", gap: "8px",
-    background: "#F8FAFC",
-    border: "1px solid #E2E8F0",
-    borderRadius: "10px",
-    padding: "8px 14px",
-    cursor: "text",
-    transition: "border-color 0.2s",
-  },
-  searchInput: {
-    background: "none", border: "none", outline: "none",
-    fontSize: "13px", color: "#334155",
-    width: "180px", fontFamily: "inherit",
-  },
 
   // Right side
   right: { display: "flex", alignItems: "center", gap: "15px" },
@@ -53,7 +38,7 @@ export const S = {
   // Icon button
   iconBtn: {
     width: "38px", height: "38px",
-    borderRadius: "10px",
+    borderRadius: "3px",
     background: "#F8FAFC",
     border: "1px solid #E2E8F0",
     display: "flex", alignItems: "center", justifyContent: "center",
@@ -77,7 +62,7 @@ export const S = {
     display: "flex", alignItems: "center", gap: "7px",
     background: "#EFF6FF",
     border: "1px solid #BFDBFE",
-    borderRadius: "10px",
+    borderRadius: "3px",
     padding: "6px 14px",
   },
   deptDot: {
@@ -106,7 +91,7 @@ export const S = {
     position: "absolute", top: "calc(100% + 8px)", right: 0,
     background: "#fff",
     border: "1px solid #E2E8F0",
-    borderRadius: "14px",
+    borderRadius: "4px",
     boxShadow: "0 8px 32px rgba(0,0,0,0.10)",
     minWidth: "200px",
     overflow: "hidden",
