@@ -3,7 +3,6 @@ import { S } from "./Navbar.styles";
 import { useState, useEffect } from "react";
 import {
   BellIcon,
-  SearchIcon,
   SettingsIcon,
   LogoutIcon,
   ProfileIcon,
@@ -48,14 +47,6 @@ export default function Navbar() {
 
       {/* ── Right ── */}
       <div style={S.right}>
-        {/* Search */}
-        {/* <div style={S.searchWrap}>
-          <SearchIcon />
-          <input
-            style={S.searchInput}
-            placeholder="Search complaints, workers…"
-          />
-        </div> */}
 
         {/* Department badge */}
         <div style={S.deptBadge}>

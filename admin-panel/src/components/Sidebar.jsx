@@ -41,10 +41,11 @@ export default function Sidebar({
                     {!collapsed && (
                         <div className="sb-logo">
                             <div className="sb-logo-mark">
-                                <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+                                {/* <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
                                     <path d="M9 1.5L15.5 5.25V12.75L9 16.5L2.5 12.75V5.25L9 1.5Z" fill="white" fillOpacity="0.9" />
                                    <circle cx="9" cy="9" r="2.5" fill="white" />
-                                </svg>
+                                </svg> */}
+                                
                             </div>
                             <span className="sb-logo-text">Civic<span>Mitra</span></span>
                         </div>
