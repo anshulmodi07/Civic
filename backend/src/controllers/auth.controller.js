@@ -65,10 +65,12 @@ export const loginAdmin = async (req, res) => {
 
     res.json({
       token,
-      admin: {
-        id: admin._id,
+      user: {
+        _id: admin._id,
         name: admin.name,
         email: admin.email,
+        departmentId: admin.departmentId,
+        role: "admin",
       },
     });
 

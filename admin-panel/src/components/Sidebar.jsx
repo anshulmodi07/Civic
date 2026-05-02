@@ -1,5 +1,6 @@
 import { useState,useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { getUser } from "../api/auth";
 import "../styles/sidebar.css";
 import { MENU } from "../data/menuData";
 import { DEPT_COLORS } from "../data/sidebarDepartmentData.js";
@@ -24,8 +25,7 @@ export default function Sidebar({
 
 
     useEffect(() => {
-        const storedUser = JSON.parse(localStorage.getItem("user"));
-        setUser(storedUser);
+        setUser(getUser());
     }, []);
     const adminAvatar = user?.name
         ? user.name.split(" ").map(n => n[0]).join("").toUpperCase()

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getComplaints } from "../../api/dashboardApi";
+import { getUser } from "../../api/auth";
 import { T } from "../../styles/dashboardStyles";
 
 export default function DonutChart() {
@@ -14,7 +15,7 @@ export default function DonutChart() {
     total: 0
   });
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = getUser();
   const deptId = user?.departmentId;
 
   useEffect(() => {

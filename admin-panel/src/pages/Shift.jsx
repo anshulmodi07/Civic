@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { fetchWorkers } from "../api/workerApi";
 import { getSchedule, saveSchedule } from "../api/shiftApi";
+import { getUser } from "../api/auth";
 
 import ShiftHeader from "../components/shift/ShiftHeader";
 import ShiftLegend from "../components/shift/ShiftLegend";
@@ -27,7 +28,7 @@ export default function Shift() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const user = JSON.parse(localStorage.getItem("user"));
+        const user = getUser();
         const dept = user?.departmentId || user?.department;
 
         const workersData = await fetchWorkers(dept);

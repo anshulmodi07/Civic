@@ -2,7 +2,7 @@
 
 import { SHIFT_HISTORY } from "../mock/shift";
 
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 // helper → convert date → day (Mon, Tue...)
 const getDayFromDate = (dateStr) => {
@@ -55,14 +55,21 @@ const mockSaveSchedule = async (schedule) => {
 // REAL API (future)
 // =============================
 const realGetSchedule = async () => {
-  const res = await fetch("/api/shifts");
+  const token = localStorage.getItem("token");
+  const res = await fetch("http://localhost:5000/api/admin/shifts", {
+    headers: { Authorization: `Bearer ${token}` }
+  });
   return res.json();
 };
 
 const realSaveSchedule = async (schedule) => {
-  const res = await fetch("/api/shifts", {
+  const token = localStorage.getItem("token");
+  const res = await fetch("http://localhost:5000/api/admin/shifts", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
     body: JSON.stringify(schedule),
   });
   return res.json();

@@ -36,7 +36,15 @@ export default function WorkersList() {
   const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  let user = {};
+  try {
+    const userStr = localStorage.getItem("user");
+    if (userStr && userStr !== "undefined") {
+      user = JSON.parse(userStr);
+    }
+  } catch (e) {
+    console.error("Failed to parse user from localStorage", e);
+  }
   const deptId = user?.departmentId;
 
   const loadWorkers = async () => {

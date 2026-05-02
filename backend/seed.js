@@ -61,6 +61,13 @@ const seedData = async () => {
         departmentId: departments.find(d => d.name === "plumber")._id,
         dateOfJoining: new Date("2024-01-18")
       },
+      {
+        name: "Worker Electrician",
+        email: "electric@nitdelhi.ac.in",
+        password: hashedPassword,
+        departmentId: departments.find(d => d.name === "electrician")._id,
+        dateOfJoining: new Date("2023-08-20")
+      },
     ]);
 
     console.log("Workers created ✅");
@@ -68,14 +75,17 @@ const seedData = async () => {
     // 🔥 get workers
     const wifiWorker = workers.find(w => w.email === "wifi@nitdelhi.ac.in");
     const plumberWorker = workers.find(w => w.email === "plumber@nitdelhi.ac.in");
+    const electricWorker = workers.find(w => w.email === "electric@nitdelhi.ac.in");
 
-    // admin
-    await Admin.create({
-      name: "Admin",
-      email: "admin@nitdelhi.ac.in",
-      password: hashedPassword,
-      departmentId: departments[0]._id,
-    });
+    // admins
+    await Admin.insertMany([
+      { name: "Admin Wifi", email: "wifi@civic.com", password: hashedPassword, departmentId: departments.find(d => d.name === "wifi")._id },
+      { name: "Admin Plumber", email: "plumber@civic.com", password: hashedPassword, departmentId: departments.find(d => d.name === "plumber")._id },
+      { name: "Admin Civil", email: "civil@civic.com", password: hashedPassword, departmentId: departments.find(d => d.name === "civil")._id },
+      { name: "Admin Electrician", email: "electric@civic.com", password: hashedPassword, departmentId: departments.find(d => d.name === "electrician")._id },
+      { name: "Admin Carpenter", email: "carpenter@civic.com", password: hashedPassword, departmentId: departments.find(d => d.name === "carpenter")._id },
+      { name: "Admin", email: "admin@nitdelhi.ac.in", password: hashedPassword, departmentId: departments[0]._id },
+    ]);
 
     console.log("Admin created ✅");
 
@@ -160,6 +170,11 @@ const seedData = async () => {
         workerId: plumberWorker._id,
         date: today,
         shift: "evening",
+      },
+      {
+        workerId: electricWorker._id,
+        date: today,
+        shift: "morning",
       },
     ]);
 

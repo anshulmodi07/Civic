@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { S } from "./Navbar.styles";
 import { useState, useEffect } from "react";
+import { getUser } from "../../api/auth";
 import {
   BellIcon,
   SettingsIcon,
@@ -16,8 +17,7 @@ export default function Navbar() {
   
 
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    setUser(storedUser);
+    setUser(getUser());
   }, []);
 
   const department = user?.department || "Department";

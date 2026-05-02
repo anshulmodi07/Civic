@@ -2,7 +2,7 @@
 
 import { ADMINS } from "../mock/admins";
 
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 // ✅ MOCK LOGIN
 const mockLogin = async ({ email, password }) => {
@@ -31,7 +31,7 @@ const mockLogin = async ({ email, password }) => {
 
 // ✅ REAL LOGIN
 const realLogin = async (payload) => {
-  const res = await fetch("http://localhost:5000/api/auth/login", {
+  const res = await fetch("http://localhost:5000/api/auth/admin/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
@@ -49,8 +49,15 @@ export const loginUser = async (payload) => {
 };
 
 // ✅ GET USER
-export const getUser = async () => {
-  return JSON.parse(localStorage.getItem("user"));
+export const getUser = () => {
+  try {
+    const userStr = localStorage.getItem("user");
+    if (!userStr || userStr === "undefined") return null;
+    return JSON.parse(userStr);
+  } catch (e) {
+    console.error("Failed to parse user from localStorage", e);
+    return null;
+  }
 };
 
 // ✅ LOGOUT

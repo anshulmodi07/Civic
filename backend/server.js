@@ -15,6 +15,7 @@ import authRoutes from "./src/routes/auth.routes.js";
 import taskRoutes from "./src/routes/task.routes.js";
 import workerRoutes from "./src/routes/worker.routes.js";
 import complaintRoutes from "./src/routes/complaint.routes.js";
+import adminRoutes from "./src/routes/admin.routes.js"; // 🔥 ADD THIS
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/workers", workerRoutes);
 app.use("/api/complaints", complaintRoutes);
+app.use("/api/admin", adminRoutes); // 🔥 ADD THIS
 
 const PORT = process.env.PORT || 3000;
 

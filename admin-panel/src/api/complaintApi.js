@@ -1,6 +1,6 @@
 // src/api/complaintApi.js
 
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 import { COMPLAINTS } from "../mock/complaints1";
 import { TASKS } from "../mock/tasks";
@@ -66,7 +66,7 @@ const realGetComplaints = async (departmentId) => {
   const token = localStorage.getItem("token");
 
   const res = await fetch(
-    `http://localhost:5000/api/complaints?departmentId=${departmentId}`,
+    `http://localhost:5000/api/admin/dashboard/complaints`,
     {
       headers: {
         Authorization: `Bearer ${token}`

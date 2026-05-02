@@ -13,10 +13,15 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const loadAuth = async () => {
       const savedToken = await AsyncStorage.getItem("token");
+      const savedUserStr = await AsyncStorage.getItem("user");
 
-      if (savedToken) {
+      if (savedToken && savedUserStr) {
         setToken(savedToken);
-        // optional: fetch user later if needed
+        try {
+          setUser(JSON.parse(savedUserStr));
+        } catch(e) {
+          console.error("Failed to parse user from storage", e);
+        }
       }
 
       setLoading(false);
@@ -35,16 +40,19 @@ export const AuthProvider = ({ children }) => {
     }
 
     const token = res.token;
+    const userData = role === "worker" ? res.worker : res.user;
 
     await AsyncStorage.setItem("token", token);
+    await AsyncStorage.setItem("user", JSON.stringify(userData));
 
     setToken(token);
-    setUser(role === "worker" ? res.worker : res.user);
+    setUser(userData);
   };
 
   // 🔥 logout
   const logout = async () => {
     await AsyncStorage.removeItem("token");
+    await AsyncStorage.removeItem("user");
     setUser(null);
     setToken(null);
   };

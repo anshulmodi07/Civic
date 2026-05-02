@@ -4,7 +4,7 @@ import { COMPLAINTS } from "../mock/complaints1";
 import { WORKERS } from "../mock/workers1";
 
 // 🔥 toggle later
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 // ─────────────────────────────────────────────
 // MOCK: COMPLAINTS
@@ -129,11 +129,11 @@ const mockStats = async (departmentId) => {
 // ─────────────────────────────────────────────
 // REAL API (BACKEND)
 // ─────────────────────────────────────────────
-const realStats = async (departmentId) => {
+const realStats = async () => {
   const token = localStorage.getItem("token");
 
   const res = await fetch(
-    `http://localhost:5000/api/dashboard/stats?departmentId=${departmentId}`,
+    `http://localhost:5000/api/admin/dashboard/stats`,
     {
       headers: {
         Authorization: `Bearer ${token}`
@@ -155,11 +155,11 @@ export const getStats = async (departmentId) => {
 // ─────────────────────────────────────────────
 // REAL COMPLAINTS
 // ─────────────────────────────────────────────
-const realComplaints = async (departmentId) => {
+const realComplaints = async () => {
   const token = localStorage.getItem("token");
 
   const res = await fetch(
-    `http://localhost:5000/api/complaints?departmentId=${departmentId}`,
+    `http://localhost:5000/api/admin/dashboard/complaints`,
     {
       headers: {
         Authorization: `Bearer ${token}`

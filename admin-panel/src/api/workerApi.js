@@ -1,5 +1,5 @@
 // 🔥 toggle when backend is ready
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 import { WORKERS } from "../mock/workers1";
 
@@ -26,7 +26,10 @@ export const fetchWorkers = async (departmentId) => {
     );
   }
 
-  const res = await fetch(`/api/workers?departmentId=${departmentId}`);
+  const token = localStorage.getItem("token");
+  const res = await fetch(`http://localhost:5000/api/admin/workers`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
   const data = await res.json();
   return data;
 };

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { getComplaints } from "../api/complaintApi";
+import { getUser } from "../api/auth";
 
 import ComplaintStatsBar from "../components/complaints/ComplaintStatsBar";
 import ComplaintFilters from "../components/complaints/ComplaintFilters";
@@ -20,7 +21,7 @@ export default function Complaints() {
   useEffect(() => {
     const load = async () => {
       try {
-        const user = JSON.parse(localStorage.getItem("user"));
+        const user = getUser();
 
         // ⚠️ Adjust depending on your login structure
         const deptId = user?.departmentId || user?.department;

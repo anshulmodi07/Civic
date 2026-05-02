@@ -20,7 +20,7 @@ export default function Dashboard() {
     }
   };
 
-  const active    = tasks.filter(t => t.status === "in-progress").length;
+  const active    = tasks.filter(t => t.status === "in-progress" || t.status === "accepted").length;
   const completed = tasks.filter(t => t.status === "completed").length;
   const total     = tasks.length;
 
@@ -40,7 +40,7 @@ export default function Dashboard() {
         {[
           { num: active,    label: "Active" },
           { num: completed, label: "Completed" },
-          { num: total,     label: "Total" },
+          { num: total,     label: "Assigned" },
         ].map((s) => (
           <View key={s.label} style={styles.statCard}>
             <Text style={styles.statNum}>{s.num}</Text>
