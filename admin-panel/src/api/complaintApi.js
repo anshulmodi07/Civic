@@ -66,7 +66,7 @@ const realGetComplaints = async (departmentId) => {
   const token = localStorage.getItem("token");
 
   const res = await fetch(
-    `http://localhost:5000/api/complaints?departmentId=${departmentId}`,
+    `http://10.201.89.114:3000/api/complaints?departmentId=${departmentId}`,
     {
       headers: {
         Authorization: `Bearer ${token}`
@@ -107,7 +107,7 @@ const mockCreateComplaint = async (payload) => {
 const realCreateComplaint = async (payload) => {
   const token = localStorage.getItem("token");
 
-  const res = await fetch("http://localhost:5000/api/complaints", {
+  const res = await fetch("http://10.201.89.114:3000/api/complaints", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -157,7 +157,7 @@ const realAcceptComplaint = async (complaintId, workerId) => {
   const token = localStorage.getItem("token");
 
   const res = await fetch(
-    `http://localhost:5000/api/complaints/${complaintId}/accept`,
+    `http://10.201.89.114:3000/api/complaints/${complaintId}/accept`,
     {
       method: "POST",
       headers: {
@@ -217,7 +217,7 @@ const realUpdateTaskStatus = async (taskId, status, extra = {}) => {
   const token = localStorage.getItem("token");
 
   const res = await fetch(
-    `http://localhost:5000/api/tasks/${taskId}/status`,
+    `http://10.201.89.114:3000/api/tasks/${taskId}/status`,
     {
       method: "PATCH",
       headers: {

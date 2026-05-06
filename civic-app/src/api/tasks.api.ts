@@ -1,5 +1,3 @@
-import api from "./axios";
-import { USE_DEMO_API } from "./config";
 import type { Task } from "@/src/types/task";
 
 /* ---------------- GLOBAL STORE ---------------- */

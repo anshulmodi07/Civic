@@ -1,120 +1,73 @@
 import api from "./axios";
-import { USE_DEMO_API } from "./config";
-import {
-  login as demoLogin,
-  getMe as demoGetMe,
-  logoutUser as demoLogout,
-} from "./demoAuth.api";
-
-/* ---------------- HELPER ---------------- */
 
 const handleError = (error, label) => {
+  const requestUrl = `${error?.config?.baseURL || ""}${error?.config?.url || ""}`;
   const message =
     error?.response?.data?.message ||
     error?.message ||
     "Something went wrong";
 
-  console.log(`${label} ERROR:`, message);
+  console.log(`${label} ERROR:`, {
+    message,
+    url: requestUrl || "unknown",
+    status: error?.response?.status,
+  });
   throw new Error(message);
 };
 
-/* ---------------- AUTH APIs ---------------- */
+const normalizeAccount = (payload) => {
+  const account = payload?.user || payload?.worker || payload?.admin || payload;
+  if (!account) return account;
 
-/**
- * USER LOGIN (Google OAuth)
- */
-export const googleLogin = async (token) => {
-  if (USE_DEMO_API) {
-    // simulate google login via demo
-    return demoLogin({
-      email: "demo@civicmitra.com",
-      role: "citizen",
-      password: "demo1234",
-    });
-  }
+  return {
+    ...account,
+    role: account.role === "user" ? "client" : account.role,
+  };
+};
 
+export const userLogin = async ({ email, password }) => {
   try {
-    const res = await api.post("/auth/google-login", { token });
+    const res = await api.post("/auth/user/login", { email, password });
     return res.data;
   } catch (error) {
-    handleError(error, "GOOGLE LOGIN");
+    handleError(error, "USER LOGIN");
   }
 };
 
-/**
- * WORKER LOGIN
- */
-export const workerLogin = async ({ email, password }) => {
-  if (USE_DEMO_API) {
-    return demoLogin({
-      email,
-      role: "worker",
-      password,
-    });
-  }
-
+export const userRegister = async ({ name, email, password }) => {
   try {
-    const res = await api.post("/auth/worker/login", {
-      email,
-      password,
-    });
+    const res = await api.post("/auth/user/register", { name, email, password });
+    return res.data;
+  } catch (error) {
+    handleError(error, "USER REGISTER");
+  }
+};
+
+export const workerLogin = async ({ email, password }) => {
+  try {
+    const res = await api.post("/auth/worker/login", { email, password });
     return res.data;
   } catch (error) {
     handleError(error, "WORKER LOGIN");
   }
 };
 
-/**
- * ADMIN LOGIN (future use)
- */
 export const adminLogin = async ({ email, password }) => {
-  if (USE_DEMO_API) {
-    return demoLogin({
-      email,
-      role: "admin",
-      password,
-    });
-  }
-
   try {
-    const res = await api.post("/auth/admin/login", {
-      email,
-      password,
-    });
+    const res = await api.post("/auth/admin/login", { email, password });
     return res.data;
   } catch (error) {
     handleError(error, "ADMIN LOGIN");
   }
 };
 
-/**
- * GET CURRENT USER
- */
 export const getMe = async () => {
-  if (USE_DEMO_API) {
-    return demoGetMe();
-  }
-
   try {
     const res = await api.get("/auth/me");
-    return res.data;
+    return normalizeAccount(res.data);
   } catch (error) {
     handleError(error, "GET ME");
   }
 };
 
-/**
- * LOGOUT
- */
-export const logoutUser = async () => {
-  if (USE_DEMO_API) {
-    return demoLogout();
-  }
-
-  try {
-    const res = await api.post("/auth/logout");
-    return res.data;
-  } catch (error) {
-    handleError(error, "LOGOUT");
-  }
-};
+export const logoutUser = async () => ({ ok: true });

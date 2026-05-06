@@ -133,7 +133,7 @@ const realStats = async (departmentId) => {
   const token = localStorage.getItem("token");
 
   const res = await fetch(
-    `http://localhost:5000/api/dashboard/stats?departmentId=${departmentId}`,
+    `http://10.201.89.114:3000/api/dashboard/stats?departmentId=${departmentId}`,
     {
       headers: {
         Authorization: `Bearer ${token}`
@@ -159,7 +159,7 @@ const realComplaints = async (departmentId) => {
   const token = localStorage.getItem("token");
 
   const res = await fetch(
-    `http://localhost:5000/api/complaints?departmentId=${departmentId}`,
+    `http://10.201.89.114:3000/api/complaints?departmentId=${departmentId}`,
     {
       headers: {
         Authorization: `Bearer ${token}`

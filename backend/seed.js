@@ -6,7 +6,7 @@ import Worker from "./src/models/worker.js";
 import Admin from "./src/models/admin.js";
 import Department from "./src/models/department.js";
 import Complaint from "./src/models/Complaint.js";
-import User from "./src/models/user.js";
+import User from "./src/models/User.js";
 import ShiftHistory from "./src/models/shift.js";
 
 dotenv.config();
@@ -79,16 +79,23 @@ const seedData = async () => {
 
     console.log("Admin created ✅");
 
-    // user
-    const user = await User.create({
+    // users
+    await User.create({
       name: "Test User",
       email: "user@nitdelhi.ac.in",
+      password: hashedPassword,
+    });
+
+    const demoUser = await User.create({
+      name: "Demo User",
+      email: "demo@nitdelhi.ac.in",
+      password: hashedPassword,
     });
 
     // complaints
     await Complaint.insertMany([
       {
-        userId: user._id,
+        userId: demoUser._id,
         type: "hostel",
         visibility: "private",
         hostelName: "Dhaula",
@@ -101,7 +108,7 @@ const seedData = async () => {
         images: [],
       },
       {
-        userId: user._id,
+        userId: demoUser._id,
         type: "campus",
         area: "Main Gate",
         locationAddress: "Near college road",
@@ -112,7 +119,7 @@ const seedData = async () => {
         images: [],
       },
       {
-        userId: user._id,
+        userId: demoUser._id,
         type: "hostel",
         visibility: "public",
         hostelName: "Dhaula",

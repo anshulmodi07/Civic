@@ -52,7 +52,7 @@ export default function TaskDetail() {
 
   const handleRevive = async () => {
     await reviveTask(currentTask.id);
-    router.back();
+    router.push("/(worker)/(tabs)/dashboard");
   };
 
   const handleConfirm = async () => {
@@ -73,7 +73,7 @@ export default function TaskDetail() {
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* BACK */}
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+      <TouchableOpacity style={styles.backBtn} onPress={() => router.push("/(worker)/(tabs)/dashboard")}>
         <Ionicons name="chevron-back" size={16} color="#185FA5" />
         <Text style={styles.backText}>Back</Text>
       </TouchableOpacity>

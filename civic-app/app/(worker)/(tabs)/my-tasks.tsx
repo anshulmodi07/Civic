@@ -67,7 +67,7 @@ export default function MyTasks() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+      <TouchableOpacity style={styles.backBtn} onPress={() => router.push("/(worker)/(tabs)/dashboard")}>
         <Ionicons name="chevron-back" size={16} color="#185FA5" />
         <Text style={styles.backText}>Back</Text>
       </TouchableOpacity>

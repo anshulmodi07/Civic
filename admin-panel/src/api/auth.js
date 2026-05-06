@@ -31,7 +31,7 @@ const mockLogin = async ({ email, password }) => {
 
 // ✅ REAL LOGIN
 const realLogin = async (payload) => {
-  const res = await fetch("http://localhost:5000/api/auth/login", {
+  const res = await fetch("http://10.201.89.114:3000/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)

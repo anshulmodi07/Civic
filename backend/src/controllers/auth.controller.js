@@ -1,120 +1,176 @@
 import Worker from "../models/worker.js";
 import Admin from "../models/admin.js";
-import User from "../models/user.js";
+import User from "../models/User.js";
 
 import bcrypt from "bcrypt";
-import { OAuth2Client } from "google-auth-library";
 import { generateToken } from "../utils/jwt.js";
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const normalizeEmail = (email = "") => String(email).trim().toLowerCase();
 
+const sanitizeAccount = (account, role) => ({
+  id: account._id,
+  name: account.name,
+  email: account.email,
+  role,
+  departmentId: account.departmentId || null,
+});
 
-// 🔥 WORKER LOGIN
+const isValidPassword = (password) =>
+  typeof password === "string" && password.length >= 6;
+
+export const registerUser = async (req, res) => {
+  try {
+    const { name, password } = req.body || {};
+    const email = normalizeEmail(req.body?.email);
+
+    if (!name?.trim() || !email || !isValidPassword(password)) {
+      return res.status(400).json({
+        message: "Name, valid email, and password of at least 6 characters are required",
+      });
+    }
+
+    const existing = await User.findOne({ email });
+    if (existing?.password) {
+      return res.status(409).json({ message: "User already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = existing
+      ? await User.findByIdAndUpdate(
+          existing._id,
+          { name: name.trim(), password: hashedPassword },
+          { new: true, runValidators: true }
+        )
+      : await User.create({
+          name: name.trim(),
+          email,
+          password: hashedPassword,
+        });
+
+    const token = generateToken(user._id, "user");
+
+    return res.status(201).json({
+      token,
+      user: sanitizeAccount(user, "client"),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+export const loginUser = async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body?.email);
+    const { password } = req.body || {};
+
+    if (!email || typeof password !== "string") {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user || !user.password) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const token = generateToken(user._id, "user");
+
+    return res.json({
+      token,
+      user: sanitizeAccount(user, "client"),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 export const loginWorker = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = normalizeEmail(req.body?.email);
+    const { password } = req.body || {};
+
+    if (!email || typeof password !== "string") {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
 
     const worker = await Worker.findOne({ email });
-
     if (!worker) {
       return res.status(400).json({ message: "Worker not found" });
     }
 
     const isMatch = await bcrypt.compare(password, worker.password);
-
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     const token = generateToken(worker._id, "worker");
 
-    res.json({
+    return res.json({
       token,
-      worker: {
-        id: worker._id,
-        name: worker.name,
-        email: worker.email,
-      },
+      worker: sanitizeAccount(worker, "worker"),
     });
-
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
 
-
-// 🔥 ADMIN LOGIN
 export const loginAdmin = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = normalizeEmail(req.body?.email);
+    const { password } = req.body || {};
+
+    if (!email || typeof password !== "string") {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
 
     const admin = await Admin.findOne({ email });
-
     if (!admin) {
       return res.status(400).json({ message: "Admin not found" });
     }
 
     const isMatch = await bcrypt.compare(password, admin.password);
-
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     const token = generateToken(admin._id, "admin");
 
-    res.json({
+    return res.json({
       token,
-      admin: {
-        id: admin._id,
-        name: admin.name,
-        email: admin.email,
-      },
+      admin: sanitizeAccount(admin, "admin"),
     });
-
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
 
-
-// 🔥 GOOGLE LOGIN (USER)
-export const googleLogin = async (req, res) => {
+export const getMe = async (req, res) => {
   try {
-    const { token } = req.body;
+    const { id, role } = req.user || {};
+    let account;
+    let responseRole = role;
 
-    // 1. Verify Google token
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-
-    const payload = ticket.getPayload();
-    const { email, name } = payload;
-
-    // 2. Domain restriction
-    if (!email.endsWith("@nitdelhi.ac.in")) {
-      return res.status(403).json({
-        message: "Only NIT Delhi users allowed",
-      });
+    if (role === "worker") {
+      account = await Worker.findById(id);
+    } else if (role === "admin") {
+      account = await Admin.findById(id);
+    } else {
+      account = await User.findById(id);
+      responseRole = "client";
     }
 
-    // 3. Find or create user
-    let user = await User.findOne({ email });
-
-    if (!user) {
-      user = await User.create({ email, name });
+    if (!account) {
+      return res.status(404).json({ message: "Account not found" });
     }
 
-    // 4. Generate JWT
-    const jwtToken = generateToken(user._id, "user");
-
-    res.json({
-      token: jwtToken,
-      user,
+    return res.json({
+      user: sanitizeAccount(account, responseRole),
     });
-
   } catch (error) {
-    console.error(error); //
-    res.status(401).json({ message: "Google auth failed" });
+    return res.status(500).json({ message: error.message });
   }
 };

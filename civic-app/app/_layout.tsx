@@ -42,7 +42,7 @@ if (user?.role === "worker" && !inWorkerGroup && !inAuthGroup) {
 
 // Client protection
 if (user?.role === "client" && !inClientGroup && !inAuthGroup) {
-  router.replace("/(client)/browse");
+  router.replace("/(client)");
   return;
 }
 

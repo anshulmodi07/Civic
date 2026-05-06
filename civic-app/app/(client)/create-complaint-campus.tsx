@@ -385,7 +385,7 @@ export default function CreateComplaintCampus() {
       >
         <TouchableOpacity
           style={fs.backBtn}
-          onPress={() => router.back()}
+          onPress={() => router.push("/(client)")}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Ionicons name="arrow-back" size={22} color="#fff" />

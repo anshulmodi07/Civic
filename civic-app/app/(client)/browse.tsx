@@ -164,6 +164,7 @@ export default function BrowseComplaints() {
     const supportCount = getSupportCount(item);
 
     return (
+      
       <TouchableOpacity
       style={styles.card}
       activeOpacity={0.8}
@@ -249,8 +250,19 @@ export default function BrowseComplaints() {
 
       {/* Header */}
       <LinearGradient colors={["#1e3a8a", "#3b82f6"]} style={styles.header}>
-        <Text style={styles.headerTitle}>Browse Complaints</Text>
-        <Text style={styles.headerSubtitle}>{filteredComplaints.length} complaints found</Text>
+        <View style={styles.headerContent}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.push("/(client)")}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle}>Browse Complaints</Text>
+            <Text style={styles.headerSubtitle}>{filteredComplaints.length} complaints found</Text>
+          </View>
+        </View>
       </LinearGradient>
 
       {/* Search Bar */}
@@ -366,6 +378,22 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 20,
     paddingHorizontal: 20,
+  },
+  headerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   headerTitle: { fontSize: 24, fontWeight: "800", color: "#fff", letterSpacing: 0.3 },
   headerSubtitle: { fontSize: 13, color: "#e0e7ff", marginTop: 4 },

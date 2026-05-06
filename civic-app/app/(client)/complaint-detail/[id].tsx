@@ -162,7 +162,7 @@ export default function ComplaintDetail() {
 
       <LinearGradient colors={["#1e3a8a", "#3b82f6"]} style={styles.header}>
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => router.push("/(client)/browse")} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Complaint Details</Text>
