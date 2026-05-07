@@ -5,15 +5,17 @@ import bcrypt from "bcryptjs";
 import Worker from "./src/models/worker.js";
 import Admin from "./src/models/admin.js";
 import Department from "./src/models/department.js";
-import Complaint from "./src/models/complaint.js";
-import User from "./src/models/user.js";
+import Complaint from "./src/models/Complaint.js";
+import User from "./src/models/User.js";
 import ShiftHistory from "./src/models/shift.js";
 
-dotenv.config();
+dotenv.config({ override: true });
+
+const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/civicmitra";
 
 const seedData = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(MONGO_URI);
     console.log("MongoDB connected ✅");
 
     // clear old data
@@ -91,8 +93,9 @@ const seedData = async () => {
 
     // user
     const user = await User.create({
-      name: "Test User",
-      email: "user@nitdelhi.ac.in",
+      name: "Demo User",
+      email: "demo@nitdelhi.ac.in",
+      password: hashedPassword,
     });
 
     // complaints

@@ -1,3 +1,4 @@
+/* eslint-disable import/no-unresolved */
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import HomeScreen from "../screens/client/HomeScreen";

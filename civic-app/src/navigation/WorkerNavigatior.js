@@ -1,3 +1,4 @@
+/* eslint-disable import/no-unresolved */
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import DashboardScreen from "../screens/worker/DashboardScreen";

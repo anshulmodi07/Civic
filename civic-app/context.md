@@ -1736,7 +1736,7 @@ try {
 
 **File**: `.env` (at project root)
 ```bash
-EXPO_PUBLIC_API_URL=http://192.168.1.x:5000    # Backend API base URL
+EXPO_PUBLIC_API_URL=http://localhost:5000    # Backend API base URL
 EXPO_PUBLIC_USE_DEMO=true                        # Toggle demo mode
 ```
 

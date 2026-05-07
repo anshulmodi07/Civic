@@ -174,7 +174,7 @@ complaintSchema.pre("validate", function () {
     this.visibility = "public";
   }
 
-  if (this.location?.lat && this.location?.lng) {
+  if (Number.isFinite(this.location?.lat) && Number.isFinite(this.location?.lng)) {
     this.coordinates = {
       type: "Point",
       coordinates: [this.location.lng, this.location.lat],

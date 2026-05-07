@@ -1,3 +1,4 @@
+/* eslint-disable import/no-unresolved */
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 

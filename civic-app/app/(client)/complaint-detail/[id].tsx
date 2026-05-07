@@ -15,7 +15,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import StatusBadge from "@/src/components/StatusBadge";
 import { getComplaintById, toggleUpvote } from "@/src/api/complaint.api";
-import api from "@/src/api/axios";
 
 type Complaint = {
   _id: string;

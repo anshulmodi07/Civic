@@ -8,10 +8,13 @@ export type Complaint = {
   landmark?: string;       // hostel public only
   area?: string;           // campus only
   locationAddress?: string; // campus only
+  address?: string;
   description: string;
   departmentId: string;
+  issueType?: string;
   status: "pending" | "completed" | "incompleted";
   images?: string[];
+  room?: string;
   createdAt: string;
 };
 
@@ -20,6 +23,15 @@ export type Task = {
   complaintId: Complaint;  // always populated
   workerId: string;
   status: "accepted" | "in-progress" | "completed" | "incompleted";
+  type?: "campus" | "hostel";
+  issueType?: string;
+  description?: string;
+  reportedAt?: string;
+  landmark?: string;
+  address?: string;
+  hostelName?: string;
+  floor?: string;
+  room?: string;
   acceptedAt?: string;
   startedAt?: string;
   completedAt?: string;

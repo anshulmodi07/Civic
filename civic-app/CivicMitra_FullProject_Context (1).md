@@ -1405,7 +1405,7 @@ const USE_MOCK = true;   // Set false for real backend
 
 **.env:**
 ```bash
-EXPO_PUBLIC_API_URL=http://192.168.1.x:5000    # Your computer's local IP
+EXPO_PUBLIC_API_URL=http://localhost:5000    # Backend API base URL
 EXPO_PUBLIC_USE_DEMO=true                        # Toggle demo vs real backend
 ```
 

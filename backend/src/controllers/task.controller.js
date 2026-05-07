@@ -1,5 +1,5 @@
-import Complaint from "../models/complaint.js";
-import Task from "../models/task.js";
+import Complaint from "../models/Complaint.js";
+import Task from "../models/Task.js";
 import Worker from "../models/worker.js";
 
 export const getTaskById = async (req, res) => {

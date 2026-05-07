@@ -201,7 +201,7 @@ export default function TaskDetail() {
           </View>
           {currentTask.notes && (
             <View style={styles.noteBox}>
-              <Text style={styles.noteLabel}>Worker's note</Text>
+              <Text style={styles.noteLabel}>Worker note</Text>
               <Text style={styles.noteText}>{currentTask.notes}</Text>
             </View>
           )}

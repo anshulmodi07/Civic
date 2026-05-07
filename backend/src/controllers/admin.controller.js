@@ -1,6 +1,6 @@
 import Worker from "../models/worker.js";
 import ShiftHistory from "../models/shift.js";
-import Complaint from "../models/complaint.js";
+import Complaint from "../models/Complaint.js";
 import Admin from "../models/admin.js";
 
 // ==========================

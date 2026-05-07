@@ -1,70 +1,86 @@
-import { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { loginWorker, loginUser } from "../api/auth.api";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { getMe, userLogin, userRegister, workerLogin } from "../api/auth.api";
 
 export const AuthContext = createContext();
 
+const TOKEN_STORAGE_KEY = "token";
+
+const getTokenFromResponse = (response) => response?.token;
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔥 load token on app start
   useEffect(() => {
-    const loadAuth = async () => {
-      const savedToken = await AsyncStorage.getItem("token");
-      const savedUserStr = await AsyncStorage.getItem("user");
-
-      if (savedToken && savedUserStr) {
-        setToken(savedToken);
-        try {
-          setUser(JSON.parse(savedUserStr));
-        } catch(e) {
-          console.error("Failed to parse user from storage", e);
+    const restore = async () => {
+      try {
+        const token = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
+        if (token) {
+          const userData = await getMe();
+          setUser(userData);
         }
+      } catch (_error) {
+        await AsyncStorage.removeItem(TOKEN_STORAGE_KEY);
+        await AsyncStorage.removeItem("user");
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
-    loadAuth();
+    restore();
   }, []);
 
-  // 🔥 login
-  const login = async (email, password, role = "worker") => {
-    let res;
-    if (role === "worker") {
-      res = await loginWorker(email, password);
-    } else {
-      res = await loginUser(email, password);
-    }
+  const login = async (data) => {
+    const response =
+      data.method === "worker"
+        ? await workerLogin({ email: data.email, password: data.password })
+        : await userLogin({ email: data.email, password: data.password });
 
-    const token = res.token;
-    const userData = role === "worker" ? res.worker : res.user;
+    const token = getTokenFromResponse(response);
+    if (!token) throw new Error("Login did not return a session token");
 
-    await AsyncStorage.setItem("token", token);
-    await AsyncStorage.setItem("user", JSON.stringify(userData));
+    await AsyncStorage.setItem(TOKEN_STORAGE_KEY, token);
+    await AsyncStorage.removeItem("user");
 
-    setToken(token);
+    const userData = await getMe();
     setUser(userData);
   };
 
-  // 🔥 logout
-  const logout = async () => {
-    await AsyncStorage.removeItem("token");
+  const register = async (data) => {
+    const response = await userRegister(data);
+    const token = getTokenFromResponse(response);
+    if (!token) throw new Error("Registration did not return a session token");
+
+    await AsyncStorage.setItem(TOKEN_STORAGE_KEY, token);
     await AsyncStorage.removeItem("user");
-    setUser(null);
-    setToken(null);
+
+    const userData = await getMe();
+    setUser(userData);
   };
 
-  return (
-    <AuthContext.Provider
-      value={{ user, token, login, logout, loading }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const logout = async () => {
+    await AsyncStorage.removeItem(TOKEN_STORAGE_KEY);
+    await AsyncStorage.removeItem("user");
+    setUser(null);
+  };
+
+  const value = useMemo(
+    () => ({
+      user,
+      loading,
+      isAuthenticated: !!user,
+      isWorker: user?.role === "worker",
+      isUser: user?.role === "client",
+      login,
+      register,
+      logout,
+    }),
+    [user, loading]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// 🔥 hook
 export const useAuth = () => useContext(AuthContext);

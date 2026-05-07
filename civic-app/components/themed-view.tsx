@@ -1,9 +1,7 @@
-import { View, Text } from 'react-native';
+import { View, type ViewProps } from "react-native";
 
-export default function Dashboard() {
-  return (
-    <View style={{ flex: 1, padding: 20 }}>
-      <Text>Dashboard</Text>
-    </View>
-  );
+export function ThemedView({ style, ...props }: ViewProps) {
+  return <View style={[{ backgroundColor: "#fff" }, style]} {...props} />;
 }
+
+export default ThemedView;
