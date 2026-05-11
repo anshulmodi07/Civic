@@ -26,7 +26,10 @@ router.get("/nearby", authMiddleware, getNearbyComplaints);
 router.get("/:id", authMiddleware, getComplaintById);
 
 // ─── Write ─────────────────────────────────────────────────────────────────────
-router.post("/", authMiddleware, createComplaint);
+import multer from "multer";
+const upload = multer({ dest: "uploads/" });
+
+router.post("/", authMiddleware, upload.array("images"), createComplaint);
 router.post("/:id/support", authMiddleware, toggleSupport);
 router.post("/:id/comments", authMiddleware, addComment);
 

@@ -15,6 +15,7 @@ import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { getAllComplaints, toggleUpvote } from "@/src/api/complaint.api";
 import { ISSUE_TYPES } from "@/src/utils/constants";
+import ComplaintMap from "./complaint-map";
 
 type Complaint = {
   _id: string;
@@ -39,6 +40,7 @@ export default function BrowseComplaints() {
   const [sortBy, setSortBy] = useState<"popular" | "recent">("recent");
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [upvotingIds, setUpvotingIds] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
 
   // Load complaints
   useEffect(() => {
@@ -223,8 +225,30 @@ export default function BrowseComplaints() {
       <StatusBar barStyle="dark-content" />
 
       {/* Header */}
-      <LinearGradient colors={["#1e3a8a", "#3b82f6"]} style={styles.header}>
-        <Text style={styles.headerTitle}>Browse Complaints</Text>
+      <LinearGradient
+        colors={["#0f172a", "#1e3a8a", "#3b82f6"]}
+        locations={[0, 0.6, 1]}
+        style={styles.header}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        <View style={styles.headerTop}>
+          <Text style={styles.headerTitle}>Browse</Text>
+          <View style={styles.viewToggle}>
+            <TouchableOpacity
+              style={[styles.toggleBtn, viewMode === "list" && styles.toggleBtnActive]}
+              onPress={() => setViewMode("list")}
+            >
+              <Ionicons name="list" size={18} color={viewMode === "list" ? "#fff" : "#94a3b8"} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toggleBtn, viewMode === "map" && styles.toggleBtnActive]}
+              onPress={() => setViewMode("map")}
+            >
+              <Ionicons name="map" size={18} color={viewMode === "map" ? "#fff" : "#94a3b8"} />
+            </TouchableOpacity>
+          </View>
+        </View>
         <Text style={styles.headerSubtitle}>{filteredComplaints.length} complaints found</Text>
       </LinearGradient>
 
@@ -315,8 +339,10 @@ export default function BrowseComplaints() {
         </ScrollView>
       )}
 
-      {/* Complaints List */}
-      {filteredComplaints.length === 0 ? (
+      {/* Complaints View (List or Map) */}
+      {viewMode === "map" ? (
+        <ComplaintMap />
+      ) : filteredComplaints.length === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons name="folder" size={48} color="#cbd5e1" />
           <Text style={styles.emptyTitle}>No complaints found</Text>
@@ -336,14 +362,37 @@ export default function BrowseComplaints() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8fafc" },
+  container: { flex: 1, backgroundColor: "#f4f7f6" },
   header: {
-    paddingTop: 16,
-    paddingBottom: 20,
+    paddingTop: 60,
+    paddingBottom: 30,
     paddingHorizontal: 20,
+    borderBottomLeftRadius: 36,
+    borderBottomRightRadius: 36,
+    shadowColor: "#1e3a8a",
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 10,
+    marginBottom: 8,
   },
-  headerTitle: { fontSize: 24, fontWeight: "800", color: "#fff", letterSpacing: 0.3 },
-  headerSubtitle: { fontSize: 13, color: "#e0e7ff", marginTop: 4 },
+  headerTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  headerTitle: { fontSize: 24, fontWeight: "800", color: "#fff", letterSpacing: 0.5 },
+  headerSubtitle: { fontSize: 14, color: "#cbd5e1", marginTop: 4 },
+  viewToggle: {
+    flexDirection: "row",
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderRadius: 8,
+    padding: 4,
+  },
+  toggleBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  toggleBtnActive: {
+    backgroundColor: "#3b82f6",
+  },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -351,17 +400,21 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 16,
     marginBottom: 12,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: "#e2e8f0",
-    height: 48,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+    height: 54,
   },
   searchInput: {
     flex: 1,
-    marginLeft: 10,
-    fontSize: 15,
-    color: "#1e293b",
+    marginLeft: 12,
+    fontSize: 16,
+    color: "#0f172a",
+    fontWeight: "500",
   },
   filterToggle: {
     flexDirection: "row",
@@ -407,26 +460,28 @@ const styles = StyleSheet.create({
   issueTypeButtonActive: { backgroundColor: "#2563eb", borderColor: "#2563eb" },
   issueTypeButtonText: { fontSize: 12, fontWeight: "600", color: "#64748b" },
   issueTypeButtonTextActive: { color: "#fff" },
-  list: { padding: 16, backgroundColor: "#f8fafc" },
+  list: { padding: 16, paddingBottom: 40 },
   card: {
     backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 14,
+    padding: 20,
+    borderRadius: 24,
+    marginBottom: 16,
     shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 18,
+    shadowOpacity: 0.04,
+    shadowRadius: 20,
     shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: "#f8fafc",
   },
-  cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+  cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   issueTypeContainer: { flexDirection: "row", alignItems: "center", gap: 8 },
-  issueType: { fontWeight: "700", color: "#2563eb", fontSize: 14, textTransform: "capitalize" },
-  statusBadge: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: 6 },
-  statusText: { fontSize: 12, fontWeight: "600", textTransform: "capitalize" },
-  description: { color: "#0f172a", fontSize: 15, marginBottom: 12, lineHeight: 20 },
+  issueType: { fontWeight: "700", color: "#2563eb", fontSize: 15, textTransform: "capitalize" },
+  statusBadge: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8 },
+  statusText: { fontSize: 12, fontWeight: "700", textTransform: "capitalize" },
+  description: { color: "#334155", fontSize: 15, marginBottom: 16, lineHeight: 22 },
   cardFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  typeLabel: { fontSize: 12, fontWeight: "600", color: "#64748b", textTransform: "uppercase", letterSpacing: 0.3 },
+  typeLabel: { fontSize: 12, fontWeight: "700", color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5 },
   statsRow: { flexDirection: "row", alignItems: "center", gap: 16 },
   stat: { flexDirection: "row", alignItems: "center", gap: 4 },
   supportButton: {

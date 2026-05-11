@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { View, ActivityIndicator, StyleSheet, Text, FlatList } from "react-native";
+import { View, ActivityIndicator, StyleSheet, Text, Dimensions } from "react-native";
+import MapView, { Marker, Callout } from "react-native-maps";
 import { getNearbyComplaints } from "@/src/api/complaint.api";
 
 type Complaint = {
@@ -38,24 +39,33 @@ export default function ComplaintMap() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Complaint Map Placeholder</Text>
-      <Text style={styles.subtitle}>
-        Demo mode shows complaint locations without a native map implementation.
-      </Text>
-      <FlatList
-        data={complaints}
-        keyExtractor={(item) => item._id}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.issueType}>{item.issueType.toUpperCase()}</Text>
-            <Text style={styles.description}>{item.description}</Text>
-            <Text style={styles.locationText}>
-              {item.location.lat.toFixed(4)}, {item.location.lng.toFixed(4)}
-            </Text>
-          </View>
-        )}
-        contentContainerStyle={styles.list}
-      />
+      <MapView
+        style={styles.map}
+        initialRegion={{
+          latitude: complaints.length > 0 ? complaints[0].location.lat : 28.8427,
+          longitude: complaints.length > 0 ? complaints[0].location.lng : 77.1054,
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02,
+        }}
+      >
+        {complaints.map((item) => (
+          <Marker
+            key={item._id}
+            coordinate={{
+              latitude: item.location.lat,
+              longitude: item.location.lng,
+            }}
+            pinColor="#3b82f6"
+          >
+            <Callout>
+              <View style={styles.callout}>
+                <Text style={styles.calloutTitle}>{item.issueType.toUpperCase()}</Text>
+                <Text style={styles.calloutDesc}>{item.description}</Text>
+              </View>
+            </Callout>
+          </Marker>
+        ))}
+      </MapView>
     </View>
   );
 }
@@ -66,50 +76,23 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8fafc",
     paddingTop: 20,
   },
-  title: {
-    fontSize: 20,
+  map: {
+    width: "100%",
+    height: "100%",
+  },
+  callout: {
+    width: 200,
+    padding: 8,
+  },
+  calloutTitle: {
     fontWeight: "700",
-    color: "#1e293b",
-    textAlign: "center",
-    marginHorizontal: 20,
-    marginBottom: 8,
-  },
-  subtitle: {
     fontSize: 14,
-    color: "#475569",
-    textAlign: "center",
-    marginHorizontal: 24,
-    marginBottom: 20,
-  },
-  list: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-  },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 14,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
-  },
-  issueType: {
-    fontSize: 14,
-    fontWeight: "700",
     color: "#2563eb",
-    marginBottom: 8,
+    marginBottom: 4,
   },
-  description: {
-    color: "#0f172a",
-    fontSize: 15,
-    marginBottom: 10,
-  },
-  locationText: {
-    color: "#475569",
+  calloutDesc: {
     fontSize: 13,
+    color: "#334155",
   },
   center: {
     flex: 1,

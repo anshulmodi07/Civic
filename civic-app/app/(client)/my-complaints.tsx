@@ -175,7 +175,8 @@ export default function MyComplaints() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#2563eb" />
+        <ActivityIndicator size="large" color="#3b82f6" />
+        <Text style={{ marginTop: 12, color: "#64748b", fontWeight: "500" }}>Loading complaints...</Text>
       </View>
     );
   }
@@ -183,48 +184,54 @@ export default function MyComplaints() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["#1e3a8a", "#3b82f6"]}
+        colors={["#0f172a", "#1e3a8a", "#3b82f6"]}
+        locations={[0, 0.6, 1]}
         style={styles.header}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
       >
-        <Text style={styles.headerTitle}>My Complaints</Text>
+        <View style={styles.headerTopRow}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>My Complaints</Text>
+          <View style={{ width: 40 }} />
+        </View>
+        <Text style={styles.headerSubtitle}>Track and manage your submitted issues</Text>
       </LinearGradient>
 
-      <View style={styles.filterBar}>
-        {[
-          { label: "All", value: "all", count: counts.all },
-          { label: "Pending", value: "pending", count: counts.pending },
-          { label: "Active", value: "in_progress", count: counts.in_progress },
-          { label: "Resolved", value: "resolved", count: counts.resolved },
-        ].map((item) => (
-          <TouchableOpacity
-            key={item.value}
-            style={[
-              styles.filterButton,
-              filterStatus === item.value && styles.filterButtonActive,
-            ]}
-            onPress={() => setFilterStatus(item.value as FilterValue)}
-            activeOpacity={0.8}
-          >
-            <Text
-              style={
-                filterStatus === item.value
-                  ? styles.filterButtonTextActive
-                  : styles.filterButtonText
-              }
-            >
-              {item.label}
-            </Text>
-            <Text
-              style={
-                filterStatus === item.value
-                  ? styles.filterCountActive
-                  : styles.filterCount
-              }
-            >
-              {item.count}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      <View style={styles.filterScrollWrapper}>
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterBar}
+          data={[
+            { label: "All", value: "all", count: counts.all },
+            { label: "Pending", value: "pending", count: counts.pending },
+            { label: "Active", value: "in_progress", count: counts.in_progress },
+            { label: "Resolved", value: "resolved", count: counts.resolved },
+          ]}
+          keyExtractor={(item) => item.value}
+          renderItem={({ item }) => {
+            const isActive = filterStatus === item.value;
+            return (
+              <TouchableOpacity
+                style={[styles.filterButton, isActive && styles.filterButtonActive]}
+                onPress={() => setFilterStatus(item.value as FilterValue)}
+                activeOpacity={0.8}
+              >
+                <Text style={isActive ? styles.filterButtonTextActive : styles.filterButtonText}>
+                  {item.label}
+                </Text>
+                <View style={[styles.badge, isActive && styles.badgeActive]}>
+                  <Text style={isActive ? styles.badgeTextActive : styles.badgeText}>
+                    {item.count}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          }}
+        />
       </View>
 
       <FlatList
@@ -232,6 +239,14 @@ export default function MyComplaints() {
         keyExtractor={(item) => item._id}
         renderItem={renderComplaint}
         contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Ionicons name="document-text-outline" size={60} color="#cbd5e1" />
+            <Text style={styles.emptyTitle}>No Complaints Found</Text>
+            <Text style={styles.emptySubtitle}>You haven't reported any issues yet.</Text>
+          </View>
+        }
       />
     </View>
   );
@@ -240,71 +255,140 @@ export default function MyComplaints() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: "#f4f7f6",
   },
   header: {
     paddingTop: 60,
-    paddingBottom: 24,
+    paddingBottom: 30,
     paddingHorizontal: 20,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    borderBottomLeftRadius: 36,
+    borderBottomRightRadius: 36,
+    shadowColor: "#1e3a8a",
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 10,
+  },
+  headerTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   headerTitle: {
     color: "#fff",
     fontSize: 22,
-    fontWeight: "700",
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+  headerSubtitle: {
+    color: "#cbd5e1",
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 4,
+  },
+  filterScrollWrapper: {
+    marginTop: -20,
+    paddingBottom: 16,
+    zIndex: 10,
   },
   filterBar: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 10,
+    gap: 12,
   },
   filterButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    backgroundColor: "#fff",
-    marginBottom: 10,
-    minWidth: "48%",
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
   filterButtonActive: {
-    backgroundColor: "#2563eb",
+    backgroundColor: "#3b82f6",
+    shadowColor: "#3b82f6",
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
   },
   filterButtonText: {
-    color: "#1f2937",
+    color: "#475569",
     fontWeight: "700",
+    fontSize: 14,
   },
   filterButtonTextActive: {
     color: "#fff",
+    fontWeight: "700",
+    fontSize: 14,
   },
-  filterCount: {
-    color: "#6b7280",
-    marginTop: 4,
+  badge: {
+    backgroundColor: "#f1f5f9",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginLeft: 8,
   },
-  filterCountActive: {
-    color: "#cfe0ff",
-    marginTop: 4,
+  badgeActive: {
+    backgroundColor: "rgba(255,255,255,0.25)",
+  },
+  badgeText: {
+    color: "#64748b",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  badgeTextActive: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "700",
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingBottom: 24,
+    paddingBottom: 40,
+    paddingTop: 8,
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 80,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#475569",
+    marginTop: 16,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: "#94a3b8",
+    marginTop: 8,
   },
   card: {
     backgroundColor: "#fff",
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 14,
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 16,
     shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 18,
+    shadowOpacity: 0.04,
+    shadowRadius: 20,
     shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: "#f8fafc",
   },
+
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -321,9 +405,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   description: {
-    color: "#0f172a",
+    color: "#334155",
     fontSize: 15,
-    marginBottom: 14,
+    lineHeight: 22,
+    marginBottom: 16,
   },
   footerRow: {
     flexDirection: "row",

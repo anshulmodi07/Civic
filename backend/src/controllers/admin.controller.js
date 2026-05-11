@@ -2,6 +2,7 @@ import Worker from "../models/worker.js";
 import ShiftHistory from "../models/shift.js";
 import Complaint from "../models/complaint.js";
 import Admin from "../models/admin.js";
+import Task from "../models/task.js";
 
 // ==========================
 // GET WORKERS FOR DEPARTMENT
@@ -167,8 +168,27 @@ export const getDashboardStats = async (req, res) => {
 export const getDashboardComplaints = async (req, res) => {
   try {
     const admin = await Admin.findById(req.user.id);
-    const complaints = await Complaint.find({ departmentId: admin.departmentId }).sort({ createdAt: -1 });
-    res.json({ complaints });
+    const complaints = await Complaint.find({ departmentId: admin.departmentId })
+      .populate("assignedWorkerId", "name email")
+      .populate("userId", "name email")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Attach task for each complaint
+    const complaintIds = complaints.map(c => c._id);
+    const tasks = await Task.find({ complaintId: { $in: complaintIds } })
+      .populate("workerId", "name email")
+      .lean();
+    
+    const taskMap = {};
+    tasks.forEach(t => { taskMap[t.complaintId.toString()] = t; });
+
+    const enhancedComplaints = complaints.map(c => ({
+      ...c,
+      task: taskMap[c._id.toString()] || null
+    }));
+
+    res.json({ complaints: enhancedComplaints });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

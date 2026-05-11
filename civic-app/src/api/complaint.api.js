@@ -637,7 +637,7 @@ export const createComplaint = async (payload) => {
 
   const isFormData = payload && typeof payload.get === "function";
   const config = isFormData
-    ? { headers: { "Content-Type": "multipart/form-data" } }
+    ? { headers: { "Accept": "application/json" } }
     : undefined;
 
   const response = await api.post("/complaints", payload, config);

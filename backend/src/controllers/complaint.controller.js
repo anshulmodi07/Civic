@@ -1,4 +1,5 @@
 import Complaint from "../models/complaint.js";
+import Department from "../models/department.js";
 import mongoose from "mongoose";
 
 // ─── DASHBOARD ─────────────────────────────────────────────────────────────────
@@ -146,6 +147,7 @@ export const createComplaint = async (req, res) => {
       roomNumber,
       landmark,
       area,
+      locationLandmark,
       locationAddress,
       description,
       issueType,
@@ -164,6 +166,23 @@ export const createComplaint = async (req, res) => {
         parsedLocation = { lat: 0, lng: 0 };
       }
     }
+    
+    if (!parsedLocation || typeof parsedLocation.lat !== "number") {
+      parsedLocation = { lat: 28.545, lng: 77.192 }; // fallback if missing
+    }
+
+    let finalDeptId = departmentId;
+    if (!finalDeptId && issueType) {
+      const dept = await Department.findOne({ name: issueType.toLowerCase() });
+      if (dept) finalDeptId = dept._id;
+    }
+
+    let imageUrls = [];
+    if (req.files && req.files.length > 0) {
+      imageUrls = req.files.map((file) => file.path);
+    } else if (images) {
+      imageUrls = images;
+    }
 
     const complaint = await Complaint.create({
       userId,
@@ -172,22 +191,23 @@ export const createComplaint = async (req, res) => {
       hostelName,
       floor,
       roomNumber,
-      landmark,
-      area,
+      landmark: landmark || (type === "hostel" ? locationLandmark : undefined),
+      area: area || (type === "campus" ? locationLandmark : undefined),
       locationAddress,
       description,
       issueType,
       priority: priority || "medium",
-      departmentId: departmentId || undefined,
+      departmentId: finalDeptId || undefined,
       status: "pending",
       location: parsedLocation,
-      images: images || [],
+      images: imageUrls,
       supporters: [],
       comments: [],
     });
 
     res.status(201).json(complaint);
   } catch (err) {
+    console.error("Complaint creation error:", err);
     res.status(400).json({ message: err.message });
   }
 };

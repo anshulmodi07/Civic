@@ -176,7 +176,7 @@ export default function ComplaintsTable() {
                       fontWeight: 600,
                       color: T.g500
                     }}>
-                      {c.assignedWorkerId || "Unassigned"}
+                      {c.assignedWorkerId?.name || "Unassigned"}
                     </td>
                   </tr>
                 ))

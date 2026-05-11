@@ -35,7 +35,7 @@ export default function ComplaintMapWeb() {
   const center =
     complaints.length > 0
       ? [complaints[0].location.lat, complaints[0].location.lng]
-      : [28.7450, 77.1120];
+      : [28.8427, 77.1054];
 
   // 📌 Leaflet map logic (SAFE)
   useEffect(() => {
